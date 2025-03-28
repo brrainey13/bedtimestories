@@ -57,10 +57,10 @@ export async function updateSession(request: NextRequest) {
     }
 
     // If the user is logged in and tries to access the /auth page, redirect them to dashboard
-    // if (user && request.nextUrl.pathname.startsWith('/auth')) {
-    //   console.log(`Redirecting authenticated user from /auth to /dashboard`);
-    //   return NextResponse.redirect(new URL('/dashboard', request.url))
-    // }
+    if (user && request.nextUrl.pathname.startsWith('/auth')) {
+      console.log(`Redirecting authenticated user from /auth to /dashboard`);
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
     // --- End Route Protection Logic ---
 
 
