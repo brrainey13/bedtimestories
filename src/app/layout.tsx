@@ -1,21 +1,21 @@
 // src/app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google"; // Keeping Geist fonts
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Tale Tinker - Craft Magical Bedtime Stories", // Updated Title
-  description: "Create personalized bedtime stories.", // Updated Description
+  title: "Tale Tinker - Craft Magical Bedtime Stories",
+  description: "Create personalized bedtime stories.",
 };
 
 export default function RootLayout({
@@ -24,14 +24,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Add className="dark" here!
-    <html lang="en" className="dark">
+    // REMOVE className="dark" from here
+    <html lang="en" suppressHydrationWarning>
       <body
-        // You can keep the font variables if you like Geist
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        // No need for bg/text classes here anymore, globals.css handles it
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system" // Use system preference by default
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

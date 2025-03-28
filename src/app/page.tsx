@@ -2,16 +2,16 @@
 import Navbar from '@/components/layout/Navbar';
 import Hero from '@/components/home/Hero';
 import FloatingOrbs from '@/components/shared/FloatingOrbs';
-// Import Footer later when you build it
+// Import Footer when ready
 // import Footer from '@/components/layout/Footer';
 
 export default function Home() {
   return (
-    <div className="relative isolate"> {/* isolate helps with z-index */}
-      {/* Background Orbs - Rendered first, positioned absolutely */}
-      <FloatingOrbs />
-
-      {/* Content */}
+    // Override background and text color for landing page specifically
+    // Use the specific color value or a named color from tailwind.config
+    <div className="relative isolate bg-[#1E1532] text-white min-h-screen overflow-x-hidden">
+      <FloatingOrbs /> {/* Orbs are behind everything */}
+      {/* Pass a prop to Navbar/Footer if they need to know they're on the landing page */}
       <Navbar />
       <main>
         <Hero />

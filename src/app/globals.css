@@ -2,38 +2,50 @@
 @import "tailwindcss";
 
 @layer base {
-  /* --- Keep your :root and .light variable definitions --- */
-  :root {
-    /* ... your dark theme variables using HSL ... */
-    --background: 257 58% 10%;
-    --foreground: 0 0% 100%;
-    /* ... */
-    --border: 258 49% 25%;
-    /* ... */
+  :root { /* LIGHT THEME should be the default */
+    --background: 0 0% 100%;        /* White */
+    --foreground: 222.2 84% 4.9%;   /* Dark text */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;   /* Dark Blue/Black for primary in light */
+    --primary-foreground: 210 40% 98%; /* Almost White */
+    --secondary: 210 40% 96.1%;     /* Light Gray */
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%; /* Mid Gray */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;   /* Red */
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;    /* Light Gray Border */
+    --input: 214.3 31.8% 91.4%;     /* Light Gray Input */
+    --ring: 222.2 84% 4.9%;         /* Dark Blue/Black Ring */
     --radius: 0.5rem;
   }
 
-  .light {
-     /* ... your light theme variables using HSL ... */
+  .dark { /* DARK THEME */
+    --background: 257 58% 10%;    /* Purple Background */
+    --foreground: 0 0% 100%;      /* White Text */
+    --card: 258 49% 15%;          /* Darker Purple Card */
+    --card-foreground: 0 0% 100%;
+    /* ... other dark variables ... */
+    --primary: 250 84% 78%;        /* Brand Purple Primary */
+    --primary-foreground: 257 58% 10%;
+     --border: 258 49% 25%;        /* Dark border */
+     --input: 258 49% 25%;         /* Dark input */
+     --ring: 250 84% 78%;          /* Brand Purple ring */
   }
 
-  /* Apply base styles */
-  * {
-    border-color: hsl(var(--border));
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  body {
-    /* Use CSS variables directly */
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    /* Keep other utilities applied */
-    @apply min-h-screen antialiased;
-  }
+  /* ... rest of globals.css (* rule, body rule) ... */
+   * {
+     border-color: hsl(var(--border));
+     margin: 0; padding: 0; box-sizing: border-box;
+   }
+   body {
+     background-color: hsl(var(--background));
+     color: hsl(var(--foreground));
+     @apply min-h-screen antialiased;
+   }
 }
-
-/* Optional: Remove these if @import is sufficient */
-/* @tailwind components; */
-/* @tailwind utilities; */
