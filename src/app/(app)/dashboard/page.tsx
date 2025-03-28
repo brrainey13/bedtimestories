@@ -1,16 +1,18 @@
 // src/app/(app)/dashboard/page.tsx
 'use client';
 
-import React, { useState, FormEvent } from 'react';
-import { useChat, Message } from '@ai-sdk/react';
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useChat } from '@ai-sdk/react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import PresetSelector from '@/components/presets/PresetSelector';
-import { themes, characters, settings, storyLengths } from '@/config/presetOptions';
+import { themes, characters, settings, storyLengths, PresetOption } from '@/config/presetOptions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner'; // <-- Import from sonner
 import { SendHorizonal, Bot, User, Wand2, Loader2 } from 'lucide-react';
@@ -47,7 +49,7 @@ export default function DashboardPage() {
     body: {
       userId: session?.user?.id,
     },
-    onError: (err: Error) => {
+    onError: (err: any) => {
       // Use sonner toast for chat errors
       toast.error('Chat Error', {
         description: err.message || 'Failed to get response from chat.',
@@ -222,7 +224,7 @@ export default function DashboardPage() {
                         Start chatting with the story AI! Ask it to write a story about anything you can imagine.
                     </p>
                  )}
-                {chatMessages.map((m: Message) => (
+                {chatMessages.map((m) => (
                     <div key={m.id} className={cn("mb-4 flex gap-3", m.role === 'user' ? 'justify-end' : 'justify-start')}>
                         {m.role !== 'user' && <Bot className="h-6 w-6 text-primary flex-shrink-0" />}
                         <div
