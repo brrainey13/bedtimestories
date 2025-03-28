@@ -1,6 +1,6 @@
 // src/app/(app)/layout.tsx
 import React from 'react';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThemeToggle } from '@/components/providers/ThemeToggle';
 
 export default function AppLayout({
   children,
