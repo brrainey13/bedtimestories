@@ -1,12 +1,26 @@
+// src/app/page.tsx
+import Navbar from '@/components/layout/Navbar';
+import Hero from '@/components/home/Hero';
+import FloatingOrbs from '@/components/shared/FloatingOrbs';
+// Import Footer later when you build it
+// import Footer from '@/components/layout/Footer';
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <h1 className="text-4xl font-bold">Bedtime Stories</h1>
-        <p className="text-lg">A collection of bedtime stories for children.</p>
+    <div className="relative isolate"> {/* isolate helps with z-index */}
+      {/* Background Orbs - Rendered first, positioned absolutely */}
+      <FloatingOrbs />
 
+      {/* Content */}
+      <Navbar />
+      <main>
+        <Hero />
+        {/* Add other sections like Features, Testimonials, CTA here later */}
+        {/* <Features /> */}
+        {/* <Testimonials /> */}
+        {/* <CallToAction /> */}
       </main>
+      {/* <Footer /> */}
     </div>
   );
 }
