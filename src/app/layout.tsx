@@ -1,5 +1,6 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google"; // Keeping Geist fonts
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bedtime Stories",
-  description: "A collection of bedtime stories for children.",
+  title: "Tale Tinker - Craft Magical Bedtime Stories", // Updated Title
+  description: "Create personalized bedtime stories.", // Updated Description
 };
 
 export default function RootLayout({
@@ -23,9 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // Add className="dark" here!
+    <html lang="en" className="dark">
       <body
+        // You can keep the font variables if you like Geist
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        // No need for bg/text classes here anymore, globals.css handles it
       >
         {children}
       </body>
