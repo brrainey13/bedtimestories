@@ -2,50 +2,83 @@
 @import "tailwindcss";
 
 @layer base {
-  :root { /* LIGHT THEME should be the default */
-    --background: 0 0% 100%;        /* White */
-    --foreground: 222.2 84% 4.9%;   /* Dark text */
+  :root {
+    /* --- LIGHT THEME (Default) --- */
+    --background: 0 0% 100%;        /* #FFFFFF */
+    --foreground: 222.2 84% 4.9%;   /* #0A0A0A approx */
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
+
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;   /* Dark Blue/Black for primary in light */
-    --primary-foreground: 210 40% 98%; /* Almost White */
+
+    --primary: 222.2 47.4% 11.2%;   /* Dark Blue/Black Primary */
+    --primary-foreground: 210 40% 98%; /* Almost White Text */
+
     --secondary: 210 40% 96.1%;     /* Light Gray */
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary-foreground: 222.2 47.4% 11.2%; /* Dark Text */
+
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%; /* Mid Gray */
+    --muted-foreground: 215.4 16.3% 46.9%; /* Mid Gray Text */
+
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
+
     --destructive: 0 84.2% 60.2%;   /* Red */
     --destructive-foreground: 210 40% 98%;
+
     --border: 214.3 31.8% 91.4%;    /* Light Gray Border */
     --input: 214.3 31.8% 91.4%;     /* Light Gray Input */
-    --ring: 222.2 84% 4.9%;         /* Dark Blue/Black Ring */
+    --ring: 222.2 47.4% 11.2%;      /* Dark Ring */
+
     --radius: 0.5rem;
   }
 
-  .dark { /* DARK THEME */
-    --background: 257 58% 10%;    /* Purple Background */
-    --foreground: 0 0% 100%;      /* White Text */
-    --card: 258 49% 15%;          /* Darker Purple Card */
-    --card-foreground: 0 0% 100%;
-    /* ... other dark variables ... */
-    --primary: 250 84% 78%;        /* Brand Purple Primary */
-    --primary-foreground: 257 58% 10%;
-     --border: 258 49% 25%;        /* Dark border */
-     --input: 258 49% 25%;         /* Dark input */
-     --ring: 250 84% 78%;          /* Brand Purple ring */
+  .dark {
+    /* --- STANDARD DARK THEME --- */
+    --background: 222.2 84% 4.9%;   /* Near Black */
+    --foreground: 210 40% 98%;     /* Near White */
+
+    --card: 222.2 84% 4.9%;        /* Match background or slightly lighter */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary is still your brand purple */
+    --primary: 250 84% 78%;         /* HSL for #9b87f5 */
+    --primary-foreground: 257 58% 10%; /* Dark text for contrast on purple */
+
+    --secondary: 217.2 32.6% 17.5%;  /* Dark Gray */
+    --secondary-foreground: 210 40% 98%; /* Near White */
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%; /* Lighter Gray Text */
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;   /* Darker Red */
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;    /* Dark Gray Border */
+    --input: 217.2 32.6% 17.5%;     /* Dark Gray Input */
+    --ring: 210 40% 98%;           /* Near White Ring */
+    /* --radius stays the same */
   }
 
-  /* ... rest of globals.css (* rule, body rule) ... */
-   * {
-     border-color: hsl(var(--border));
-     margin: 0; padding: 0; box-sizing: border-box;
-   }
-   body {
-     background-color: hsl(var(--background));
-     color: hsl(var(--foreground));
-     @apply min-h-screen antialiased;
-   }
+  /* Base Styles */
+  * {
+    border-color: hsl(var(--border));
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    @apply min-h-screen antialiased;
+  }
 }

@@ -1,16 +1,16 @@
 // tailwind.config.ts
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    darkMode: ["class"], // Or 'media' if you prefer
+    darkMode: ["class"], // Keep this
     content: [
       './pages/**/*.{ts,tsx}',
       './components/**/*.{ts,tsx}',
       './app/**/*.{ts,tsx}',
-      './src/**/*.{ts,tsx}', // Ensure src is included
+      './src/**/*.{ts,tsx}',
     ],
     prefix: "",
     theme: {
-      container: { // Keep container settings if you had them
+      container: {
         center: true,
         padding: "2rem",
         screens: {
@@ -18,12 +18,13 @@ module.exports = {
         },
       },
       extend: {
+        // Color definitions now rely entirely on CSS variables defined in globals.css
         colors: {
-          border: "hsl(var(--border))", // Use HSL vars for shadcn compatibility
+          border: "hsl(var(--border))",
           input: "hsl(var(--input))",
           ring: "hsl(var(--ring))",
-          background: "hsl(var(--background))", // Reference the CSS variable
-          foreground: "hsl(var(--foreground))", // Reference the CSS variable
+          background: "hsl(var(--background))",
+          foreground: "hsl(var(--foreground))",
           primary: {
             DEFAULT: "hsl(var(--primary))",
             foreground: "hsl(var(--primary-foreground))",
@@ -52,23 +53,27 @@ module.exports = {
             DEFAULT: "hsl(var(--card))",
             foreground: "hsl(var(--card-foreground))",
           },
-          // You can still add specific color names if needed
-          'deep-purple': '#1E1532',
-          'brand-purple': '#9b87f5',
-          'brand-pink': '#ec4899', // Example pink
+          // Keep specific named colors ONLY if needed for gradients etc.
+          // otherwise, rely on semantic names (primary, secondary...)
+          'brand-purple': '#9b87f5', // = hsl(var(--primary)) in dark mode
+          'brand-pink': '#ec4899',
+          // Gradient colors - map to actual colors if needed by name
+          'gradient-purple': 'hsl(var(--primary))', // Example: using primary var for this
+          'gradient-pink': '#ec4899', // Keeping specific hex
+          'gradient-red': 'hsl(var(--destructive))', // Example: using destructive var
         },
-        borderRadius: { // Keep border radius settings
+        borderRadius: {
           lg: "var(--radius)",
           md: "calc(var(--radius) - 2px)",
           sm: "calc(var(--radius) - 4px)",
         },
-        keyframes: { // Keep keyframes if you had them
-           // ... your keyframes
+        keyframes: {
+           // ... your keyframes if any ...
         },
         animation: {
-           // ... your animations
+           // ... your animations if any ...
         },
       },
     },
-    plugins: [require("tailwindcss-animate")], // Keep plugins
+    plugins: [require("tailwindcss-animate")],
   }
