@@ -1,62 +1,78 @@
-import { createServerClient } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
+// src/utils/supabase/middleware.ts (or wherever you placed it)
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { type NextRequest, NextResponse } from 'next/server'
 
-export const updateSession = async (request: NextRequest) => {
-  // This `try/catch` block is only here for the interactive tutorial.
-  // Feel free to remove once you have Supabase connected.
+export async function updateSession(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+
   try {
-    // Create an unmodified response
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
-
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() {
-            return request.cookies.getAll();
+          // Define functions for reading, setting, and removing cookies
+          get(name: string) {
+            return request.cookies.get(name)?.value
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value),
-            );
-            response = NextResponse.next({
-              request,
-            });
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options),
-            );
+          set(name: string, value: string, options: CookieOptions) {
+            // If the cookie is set, update the request and response cookies
+            request.cookies.set({ name, value, ...options }) // Update request for current processing
+            response = NextResponse.next({ // Create new response to attach updated cookies
+              request: {
+                headers: request.headers,
+              },
+            })
+            response.cookies.set({ name, value, ...options }) // Set cookie on the response
+          },
+          remove(name: string, options: CookieOptions) {
+            // If the cookie is removed, update the request and response cookies
+            request.cookies.set({ name, value: '', ...options }) // Update request for current processing
+            response = NextResponse.next({ // Create new response to attach updated cookies
+              request: {
+                headers: request.headers,
+              },
+            })
+            response.cookies.set({ name, value: '', ...options }) // Set expired cookie on the response
           },
         },
-      },
-    );
+      }
+    )
 
-    // This will refresh session if expired - required for Server Components
-    // https://supabase.com/docs/guides/auth/server-side/nextjs
-    const user = await supabase.auth.getUser();
+    // Refresh session if expired - REQUIRED FOR SERVER COMPONENTS
+    const { data: { user } } = await supabase.auth.getUser()
 
-    // protected routes
-    if (request.nextUrl.pathname.startsWith("/protected") && user.error) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
+    // --- Your Route Protection Logic (Example) ---
+    const publicPaths = ['/auth', '/about', '/pricing']; // Add any other public paths
+    const isPublicPath = publicPaths.some(path => request.nextUrl.pathname.startsWith(path)) || request.nextUrl.pathname === '/';
+
+    // If trying to access a protected route without a user, redirect to /auth
+    if (!user && !isPublicPath && !request.nextUrl.pathname.startsWith('/api') && !request.nextUrl.pathname.startsWith('/_next')) { // Adjust conditions as needed
+       console.log(`Redirecting unauthenticated user from ${request.nextUrl.pathname} to /auth`);
+       return NextResponse.redirect(new URL('/auth', request.url))
     }
 
-    if (request.nextUrl.pathname === "/" && !user.error) {
-      return NextResponse.redirect(new URL("/protected", request.url));
-    }
+    // If the user is logged in and tries to access the /auth page, redirect them to dashboard
+    // if (user && request.nextUrl.pathname.startsWith('/auth')) {
+    //   console.log(`Redirecting authenticated user from /auth to /dashboard`);
+    //   return NextResponse.redirect(new URL('/dashboard', request.url))
+    // }
+    // --- End Route Protection Logic ---
 
-    return response;
+
+    return response
+
   } catch (e) {
-    // If you are here, a Supabase client could not be created!
-    // This is likely because you have not set up environment variables.
-    // Check out http://localhost:3000 for Next Steps.
+     console.error("Error in Supabase middleware:", e);
+    // If a Supabase client fails to be created, continue without session refresh
     return NextResponse.next({
       request: {
         headers: request.headers,
       },
-    });
+    })
   }
-};
+}
