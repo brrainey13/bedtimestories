@@ -1,8 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function PATCH(req: Request, context: { params: { storyId: string } }) {
-  const { storyId } = context.params;
+export async function PATCH(req: NextRequest, { params }: { params: { storyId: string } }) {
+  const { storyId } = params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
