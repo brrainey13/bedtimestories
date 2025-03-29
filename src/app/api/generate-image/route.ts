@@ -1,7 +1,7 @@
 // src/app/api/generate-image/route.ts
 import { openai } from '@ai-sdk/openai';
 import { experimental_generateImage as generateImage, NoImageGeneratedError } from 'ai';
-import { createClient } from '@/utils/supabase/server'; // Use the server client
+import { createClient } from '@/utils/supabase/server'; // Use server client for auth check & storage
 import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
@@ -10,55 +10,78 @@ export const maxDuration = 60; // Image generation can take time
 
 export async function POST(req: Request) {
   try {
+    // 1. Authentication Check
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 2. Parse Request Body
     const body = await req.json();
     const {
         prompt,
-        userId,
-        // storyId // Optional: Pass storyId if you want to update the record
+        userId // Client sends this for verification
     } = body;
 
-    // 1. Validate Input
-    if (!prompt || !userId) {
-      return NextResponse.json({ error: 'Prompt and User ID are required' }, { status: 400 });
+    // Validate Input
+    if (!prompt) {
+      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
-    console.log(`Received image generation request for user ${userId} with prompt: "${prompt.substring(0, 50)}..."`);
+    if (!userId || userId !== user.id) {
+        return NextResponse.json({ error: 'User ID mismatch or missing' }, { status: 403 });
+    }
+    console.log(`API: Image request for user ${user.id} with prompt: "${prompt.substring(0, 50)}..."`);
 
-    // 2. Generate Image
-    let finalImageUrl: string | null = null;
-    const supabase = await createClient(); // Use the server client here
 
+    // 3. Generate Image using AI SDK
+    let imageBuffer: Buffer | null = null;
     try {
-        console.log(`Generating image with prompt: "${prompt.substring(0, 100)}..."`);
-
-        // Call generateImage - remove explicit responseFormat, let the SDK default handle it
-        // The docs show accessing .base64 and .uint8Array without setting responseFormat
+        console.log(`Generating image via AI SDK...`);
+        // Use the SDK's generateImage function
         const { image, warnings } = await generateImage({
             model: openai.image('dall-e-3'), // Or 'dall-e-2'
             prompt: prompt,
             size: '1024x1024',
             n: 1,
-            // responseFormat: 'b64_json', // REMOVED based on docs example accessing .base64/.uint8Array
         });
 
         if (warnings) {
-          console.warn("Image generation warnings:", warnings);
+            console.warn("Image generation warnings:", warnings);
         }
 
-        let imageBuffer: Buffer | null = null;
-
-        // --- Access image data based on the documentation structure ---
-        if (image && image.uint8Array) {
-           console.log("Image data received via image.uint8Array. Converting to Buffer.");
-           imageBuffer = Buffer.from(image.uint8Array);
-        } else if (image && image.base64) {
-           console.log("Image data received via image.base64. Converting to Buffer.");
-           imageBuffer = Buffer.from(image.base64, 'base64');
+        // Access image data (prioritize uint8Array for Buffer)
+        if (image?.uint8Array) {
+            console.log("Image data received as Uint8Array.");
+            imageBuffer = Buffer.from(image.uint8Array);
+        } else if (image?.base64) {
+            console.log("Image data received as Base64 string.");
+            imageBuffer = Buffer.from(image.base64, 'base64');
         }
-        // --- End of data access logic ---
 
-        if (imageBuffer) {
+        if (!imageBuffer) {
+            // This case might occur if the AI response is unexpected or empty
+             console.warn("Image generation succeeded according to SDK, but no image data (uint8Array or base64) was found.");
+             throw new Error("AI service returned success but no image data.");
+        }
+
+    } catch (imgError: any) {
+        console.error("Error during AI image generation:", imgError);
+         if (imgError instanceof NoImageGeneratedError || imgError.name === 'AI_NoImageGeneratedError') {
+            console.error("AI_NoImageGeneratedError Details - Cause:", imgError.cause);
+            return NextResponse.json({ error: `AI failed to generate image: ${imgError.message}` }, { status: 502 });
+         }
+        // General error during the AI generation process
+         return NextResponse.json({ error: `Image generation failed: ${imgError.message}` }, { status: 500 });
+    }
+
+    // 4. Upload Image to Supabase Storage (Keeping this coupled for simplicity)
+    let finalImageUrl: string | null = null;
+    if (imageBuffer) {
+        try {
             const fileName = `${randomUUID()}.png`;
-            const filePath = `${userId}/${fileName}`; // User-specific folders
+            const filePath = `${user.id}/${fileName}`; // User-specific folders
             const bucketName = 'story-generations'; // Your bucket name
 
             console.log(`Uploading image to Supabase Storage: ${bucketName}/${filePath}`);
@@ -67,58 +90,39 @@ export async function POST(req: Request) {
                 .from(bucketName)
                 .upload(filePath, imageBuffer, {
                     contentType: 'image/png',
-                    upsert: false, // Don't overwrite existing files with the same random name
+                    upsert: false,
                 });
 
             if (uploadError) {
-                console.error("Supabase Storage upload error:", uploadError.message);
-                // Optionally: return a specific error about storage failure
-                // return NextResponse.json({ error: `Storage upload failed: ${uploadError.message}` }, { status: 500 });
-            } else {
-                console.log("Image uploaded successfully:", uploadData.path);
-                // Get public URL (ensure bucket policy allows public reads or use signed URLs)
-                const { data: urlData } = supabase.storage
-                    .from(bucketName)
-                    .getPublicUrl(filePath);
-
-                if (urlData?.publicUrl) {
-                    finalImageUrl = urlData.publicUrl;
-                    console.log("Public Image URL:", finalImageUrl);
-
-                    // Optional: Update the story record if storyId was passed
-                    // ... (update logic remains the same)
-
-                } else {
-                    console.error("Could not get public URL for uploaded image.");
-                    // Optionally: return error if URL is crucial
-                    // return NextResponse.json({ error: "Could not get public URL for image." }, { status: 500 });
-                }
+                throw new Error(`Storage upload failed: ${uploadError.message}`);
             }
-        } else {
-             // This log message should now reflect the actual properties checked
-             console.warn("Image generation call completed, but did not return usable data in image.uint8Array or image.base64 property.");
-             // Return an error because image generation seemingly failed to produce data
-             return NextResponse.json({ error: "Image generation failed to produce data." }, { status: 500 });
-        }
 
-    } catch (imgError: any) {
-        console.error("Error during image generation or upload process:", imgError);
-        // Check if it's the specific AI_NoImageGeneratedError from the SDK
-         if (imgError instanceof NoImageGeneratedError || imgError.name === 'AI_NoImageGeneratedError') {
-            console.error("AI_NoImageGeneratedError Details - Cause:", imgError.cause);
-            console.error("AI_NoImageGeneratedError Details - Responses:", imgError.responses);
-            return NextResponse.json({ error: `AI failed to generate image: ${imgError.message}` }, { status: 502 }); // Bad Gateway might be appropriate
-         }
-        // General error during the process
-         return NextResponse.json({ error: `Image processing failed: ${imgError.message}` }, { status: 500 });
+            console.log("Image uploaded successfully:", uploadData.path);
+            // Get public URL
+            const { data: urlData } = supabase.storage
+                .from(bucketName)
+                .getPublicUrl(filePath);
+
+            if (!urlData?.publicUrl) {
+                 throw new Error("Could not get public URL for uploaded image.");
+            }
+            finalImageUrl = urlData.publicUrl;
+            console.log("Public Image URL:", finalImageUrl);
+
+        } catch (uploadError: any) {
+             console.error("Error during image upload or URL retrieval:", uploadError);
+             return NextResponse.json({ error: `Image processing failed after generation: ${uploadError.message}` }, { status: 500 });
+        }
     }
 
-    // 3. Return Response
+    // 5. Return Response (Image URL Only)
+    // The client will use this URL and the storyId (obtained previously)
+    // to call the PATCH /api/stories/[storyId] route.
     if (finalImageUrl) {
         return NextResponse.json({ imageUrl: finalImageUrl });
     } else {
-        // This path is reached if upload failed but wasn't returned as error, or URL failed
-        return NextResponse.json({ error: "Image processed but could not retrieve final URL." }, { status: 500 });
+        // Should ideally be caught above, but as a fallback
+        return NextResponse.json({ error: "Image generated but could not be stored or URL retrieved." }, { status: 500 });
     }
 
   } catch (error: any) {

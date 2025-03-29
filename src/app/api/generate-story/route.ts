@@ -1,129 +1,95 @@
 // src/app/api/generate-story/route.ts
 import { openai } from '@ai-sdk/openai';
-import { CoreMessage, streamText } from 'ai'; // No DataStream needed here
-import { createClient } from '@/utils/supabase/server';
+import { CoreMessage, streamText } from 'ai';
+import { createClient } from '@/utils/supabase/server'; // Still needed for auth check
+import { NextResponse } from 'next/server'; // For error responses
 
 export const maxDuration = 30;
-const CHAT_GENERATED_PLACEHOLDER = 'chat-request';
+
+// System prompt helper
+const getSystemPrompt = (source: string | undefined): string => {
+    if (source === 'preset') {
+        return `You are a children's storyteller. Generate ONLY the story text based on the user's request. Do NOT include any conversational introductory phrases like "Sure, here's a story..." or "Okay, let's begin...". Directly start with the story content itself. Be engaging, imaginative, and ensure a clear narrative arc (beginning, middle, end) appropriate for bedtime. Adhere to the requested theme, character, setting, and approximate length.`;
+    }
+    // Default for chat
+    return 'You are a helpful and creative storytelling assistant. Engage with the user to collaboratively write children\'s stories.';
+}
 
 export async function POST(req: Request) {
   try {
+    // 1. Authentication Check (using server client is fine here)
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // We still need the user ID from the *authenticated* session for validation,
+    // even if the client sends it in the payload.
+    if (!user) {
+      // Use NextResponse for standard JSON error
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // 2. Parse Request Body
     const body = await req.json();
     const {
       messages, // Standard from useChat (for chat mode)
-      data       // Custom data payload (includes presets, userId)
+      data       // Custom data payload (includes presets, userId for *verification*, source)
     } = body;
 
-    const userId = data?.userId;
-    const source = data?.source;
+    const clientUserId = data?.userId; // User ID sent by the client
+    const source = data?.source;       // 'preset' or 'chat' (or undefined)
 
-    if (!userId) {
-      // Throw error to be caught and returned as JSON
-      throw new Error('User ID is required in data payload');
+    // Verify the user ID sent by the client matches the authenticated user
+    if (!clientUserId || clientUserId !== user.id) {
+         return NextResponse.json({ error: 'User ID mismatch or missing' }, { status: 403 });
     }
 
-    let initialMessages: CoreMessage[] = [];
-    let presetDataForDB = { theme: '', character: '', setting: '', storyLength: '' };
-    let isPresetMode = false;
+    // 3. Prepare Messages for AI
+    let messagesForAI: CoreMessage[] = [];
+    const systemPrompt = getSystemPrompt(source);
 
     if (source === 'preset' && data?.theme && data?.character && data?.setting && data?.storyLength) {
-      isPresetMode = true;
-      console.log('API: Generating story from presets received');
-      presetDataForDB = {
-        theme: data.theme,
-        character: data.character,
-        setting: data.setting,
-        storyLength: data.storyLength
-      };
+      console.log('API: Generating story from presets');
       const userPrompt = `Write a children's bedtime story with the following elements:
-        - Theme: ${presetDataForDB.theme}
-        - Main Character: ${presetDataForDB.character}
-        - Setting: ${presetDataForDB.setting}
-        - Desired Length: Approximately ${presetDataForDB.storyLength} reading time. Make it engaging and imaginative.`;
+        - Theme: ${data.theme}
+        - Main Character: ${data.character}
+        - Setting: ${data.setting}
+        - Desired Length: Approximately ${data.storyLength} reading time. Make it engaging and imaginative.`;
 
-      initialMessages = [
-        {
-          role: 'system',
-          content: `You are a children's storyteller. Generate ONLY the story text based on the user's request. Do NOT include any conversational introductory phrases like "Sure, here's a story..." or "Okay, let's begin...". Directly start with the story content itself. Be engaging, imaginative, and ensure a clear narrative arc (beginning, middle, end) appropriate for bedtime. Adhere to the requested theme, character, setting, and approximate length.`,
-        },
-        { role: 'user', content: userPrompt }, // Send constructed prompt as user message
+      messagesForAI = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
       ];
     } else { // Chat mode
       if (!messages || !Array.isArray(messages) || messages.length === 0) {
-        throw new Error('Messages are required for chat mode');
+        return NextResponse.json({ error: 'Messages are required for chat mode' }, { status: 400 });
       }
        console.log('API: Generating story from chat messages');
-       const systemPrompt: CoreMessage = { role: 'system', content: 'You are a helpful storytelling assistant.' };
-       // Directly assert the incoming messages type. useChat should send compatible messages.
+       // Ensure incoming messages conform to CoreMessage structure if needed
        const chatMessages = messages as CoreMessage[];
-       initialMessages = [systemPrompt, ...chatMessages];
-       presetDataForDB = { // Placeholders for DB
-          theme: CHAT_GENERATED_PLACEHOLDER,
-          character: CHAT_GENERATED_PLACEHOLDER,
-          setting: CHAT_GENERATED_PLACEHOLDER,
-          storyLength: CHAT_GENERATED_PLACEHOLDER
-       }
+       messagesForAI = [{ role: 'system', content: systemPrompt }, ...chatMessages];
     }
 
+    // 4. Stream Text Generation (AI Interaction Only)
     const result = streamText({
-      model: openai('gpt-4o-mini'),
-      messages: initialMessages,
-      async onFinish({ text, usage, finishReason }) {
-        console.log(`Story text generation finished with reason: ${finishReason}.`);
-        // Only save if the generation was successful
-        if (finishReason === 'stop' || finishReason === 'length' || finishReason === 'tool-calls') {
-            const supabase = await createClient();
-            console.log("Saving story text to database...");
-            try {
-              const storyData = {
-                user_id: userId,
-                theme: presetDataForDB.theme,
-                character: presetDataForDB.character,
-                setting: presetDataForDB.setting,
-                story_length: presetDataForDB.storyLength, // Ensure column name matches DB
-                content: text,
-                // image_url is handled separately
-              };
-
-              const { data: savedStory, error: saveError } = await supabase
-                .from('stories') // Your table name
-                .insert(storyData)
-                .select('id')
-                .single();
-
-              if (saveError) {
-                // Log error but don't interrupt the main flow typically
-                console.error("Error saving story text to Supabase:", saveError.message);
-              } else {
-                console.log(`Story text saved successfully (ID: ${savedStory?.id}) for user: ${userId}`);
-                // Story ID is saved, but not sent back in this version
-              }
-            } catch (e: any) {
-              console.error("Exception during story text save:", e.message);
-            }
-        } else {
-             console.log(`Not saving story due to finish reason: ${finishReason}`);
-        }
-      },
-      onError: (err) => {
-           console.error("Streaming Error:", err);
-           // Error is logged, but the stream might still finish or contain an error part handled by the client
-      },
-      // No experimental_streamData: true needed
+      model: openai('gpt-4o-mini'), // Or your preferred model
+      messages: messagesForAI,
+       // REMOVED onFinish - Saving happens client-side now
+       onError: (err) => {
+            console.error("AI Streaming Error:", err);
+            // Error is logged; client-side useChat hook also handles errors.
+       },
     });
 
-    // Return the standard Vercel AI SDK Data Stream response
+    // 5. Return AI Stream Response
+    // This directly returns the stream to the client (useChat hook)
     return result.toDataStreamResponse();
 
   } catch (error: any) {
-    // Catch top-level errors (e.g., JSON parsing, missing userId)
+    // Catch top-level errors (e.g., JSON parsing)
     console.error("API Route /generate-story Error:", error);
-    const errorMessage = error.message || "An unexpected error occurred.";
+    const errorMessage = error.message || "An unexpected error occurred during story generation.";
     const status = error.status || 500;
      // Return a standard JSON error response
-     return new Response(JSON.stringify({ error: errorMessage }), {
-        status: status,
-        headers: { 'Content-Type': 'application/json' },
-     });
+     return NextResponse.json({ error: errorMessage }, { status: status });
   }
 }
