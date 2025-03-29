@@ -154,8 +154,8 @@ export default function PresetGenerator() {
                 storyContent += chunk;
                 setGeneratedStory(storyContent); // Update state progressively
             }
-            const finalStoryText = storyContent.trim(); // Get final complete text
-             setGeneratedStory(finalStoryText); // Set final text
+            const finalStoryText = storyContent.replace(/\0/g, '').trim(); // Remove null bytes if they exist
+            setGeneratedStory(finalStoryText);// Set final text
             console.log("Story generation finished.");
             toast.success("Story Generated!");
 
