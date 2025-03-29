@@ -1,14 +1,14 @@
 // src/app/api/stories/[storyId]/route.ts
 import { createClient } from '@/utils/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function PATCH(
-    req: Request,
-    { params }: { params: { storyId: string } } // Corrected: No type annotation after destructuring
+    req: NextRequest,
+    { params }: { params: { storyId: string } }
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const storyId = params.storyId; // Access storyId directly from the destructured params
+  const storyId = params.storyId;
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -66,7 +66,7 @@ export async function PATCH(
 // You could also avoid destructuring immediately:
 /*
 export async function PATCH(
-    req: Request,
+    req: NextRequest,
     context: { params: { storyId: string } } // Type the whole context object
 ) {
     const storyId = context.params.storyId; // Access via context.params
