@@ -1,14 +1,11 @@
 // src/app/api/stories/[storyId]/route.ts
 import { createClient } from '@/utils/supabase/server';
-// Keep NextRequest import if you use its specific features elsewhere,
-// but change the function signature to use the standard Request type.
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export async function PATCH(
-    req: Request, // <--- Change this line back to 'Request'
+    req: Request,
     context: { params: { storyId: string } }
 ) {
-  // ... rest of your code remains the same ...
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const storyId = context.params.storyId;
