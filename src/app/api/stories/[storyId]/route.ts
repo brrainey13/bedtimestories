@@ -1,14 +1,16 @@
 // src/app/api/stories/[storyId]/route.ts
+
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 
 export async function PATCH(
     req: Request,
-    context: { params: { storyId: string } }
+    context: { params: Promise<{ storyId: string }> }
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const storyId = context.params.storyId;
+
+  const { storyId } = await context.params;
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -56,7 +58,9 @@ export async function PATCH(
 
   } catch (error: any) {
     console.error(`API Route /stories/${storyId} PATCH Error:`, error);
+    // Ensure storyId is defined before logging if error happens before assignment
+    const idForLog = typeof storyId === 'string' ? storyId : '[unknown]';
+    console.error(`API Route /stories/${idForLog} PATCH Error:`, error);
     return NextResponse.json({ error: error.message || 'Failed to update story' }, { status: 500 });
   }
 }
-// adding comment
