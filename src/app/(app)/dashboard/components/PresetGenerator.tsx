@@ -221,10 +221,21 @@ export default function PresetGenerator() {
                  <PresetSelector title="Pick the Perfect Setting" options={settings} selectedValue={selectedSetting} onValueChange={setSelectedSetting} customValue={customSetting} onCustomValueChange={setCustomSetting} customPlaceholder="E.g., A bustling city made of clouds" isTextArea={true} />
                  <PresetSelector title="Choose a Story Length" options={storyLengths} selectedValue={selectedLength} onValueChange={setSelectedLength} customValue={customLength} onCustomValueChange={setCustomLength} customPlaceholder="E.g., 7 minutes" isTextArea={false} />
 
-                 <Button type="submit" size="lg" className="w-full" disabled={isSubmitDisabled}>
-                     {(isLoadingStory || isLoadingImage) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                     Generate Story & Image with Presets
-                 </Button>
+                <Button
+                    type="submit"
+                    size="lg"
+                    className={`w-full border-2 transition-transform duration-150 ${
+                        isSubmitDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 cursor-pointer'
+                    }`}
+                    disabled={isSubmitDisabled}
+                >
+                    {(isLoadingStory || isLoadingImage) ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Wand2 className="mr-2 h-4 w-4" />
+                    )}
+                    Generate Story & Image with Presets
+                </Button>
                  {/* Display error from the hook */}
                  {error && (
                      <p className="text-sm text-destructive text-center mt-2 flex items-center justify-center gap-1">
