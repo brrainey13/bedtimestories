@@ -6,15 +6,16 @@ import { Button } from '@/components/ui/button';
 import React from 'react';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { ThemeToggle } from '@/components/providers/ThemeToggle';
-import { usePathname } from 'next/navigation'; // 1. Import usePathname
-import { cn } from '@/lib/utils'; // 2. Import cn utility
+// import { ThemeToggle } from '@/components/providers/ThemeToggle'; // Not shown on landing page design
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+// import Image from 'next/image'; // If using an image logo
 
 const Navbar = () => {
   const { session, supabase } = useAuth();
   const router = useRouter();
-  const pathname = usePathname(); // 3. Get the current path
-  const isLandingPage = pathname === '/'; // 4. Check if it's the landing page
+  const pathname = usePathname();
+  const isLandingPage = pathname === '/';
 
   const handleSignOut = async () => {
     if (!supabase) return;
@@ -23,67 +24,81 @@ const Navbar = () => {
     router.refresh();
   };
 
+  // Landing page specific links
+  const landingNavLinks = [
+    { href: '#hero', label: 'Home' }, // Assuming #hero is the ID of your Hero section
+    { href: '#features', label: 'Features' }, // Assuming #features is the ID of your Features section
+    { href: '#testimonials', label: 'Parents' }, // Linking Parents to testimonials as an example
+    // Add more landing-page specific links here if "How It Works" or actual "Stories" (showcase) sections exist
+    // { href: '#how-it-works', label: 'How It Works' },
+  ];
+
+  // App specific links (when user is logged in)
+  const appNavLinks = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/stories', label: 'My Stories' },
+    // { href: '/profile', label: 'Profile'}
+  ];
+
+
   return (
-    // 5. Apply conditional classes using cn()
     <nav
       className={cn(
-        "sticky top-0 w-full z-50", // Common sticky styles
+        "sticky top-0 w-full z-50 transition-all duration-300",
         isLandingPage
-          ? "bg-[#1E1532]/90 backdrop-blur-sm" // Landing: Purpleish background, NO border-b by default
-          : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b" // App: Theme background, WITH border-b
+          ? "bg-transparent py-2" // Landing page: transparent, adjust padding if needed
+          : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b shadow-sm" // App: Theme background
       )}
     >
-      {/* Container remains the same */}
       <div className="container mx-auto px-4 h-16 flex items-center justify-between max-w-7xl">
         <Link href="/" className={cn(
-            "text-2xl font-semibold flex items-center",
-             isLandingPage ? "text-white" : "text-foreground" // Adjust text color if needed
+            "text-2xl font-bold flex items-center", // Increased font weight
+             isLandingPage ? "text-purple-700" : "text-foreground"
              )}>
-          Tale Tinker
+          {/* <Image src="/logo-placeholder.svg" alt="StoryMagic Logo" width={32} height={32} className="mr-2" /> */}
+          StoryMagic
         </Link>
 
-        <div className="flex items-center gap-2">
-          {/* 6. Conditionally render ThemeToggle only if NOT on landing page */}
-          {!isLandingPage && <ThemeToggle />}
-
-          {/* Conditional Auth Links - Logic remains the same */}
-          {session ? (
-            <>
-              <Link href="/dashboard">
-                <Button variant="ghost">Dashboard</Button>
-              </Link>
-              <Link href="/stories">
-                <Button variant="ghost">My Stories</Button>
-              </Link>
-              {/* <Link href="/profile">
-                 <Button variant="ghost">Profile</Button>
-               </Link> */}
-              <Button onClick={handleSignOut} variant="outline">
-                Sign Out
+        <div className="hidden md:flex items-center gap-2">
+          {isLandingPage && !session && landingNavLinks.map(link => (
+            <Link key={link.label} href={link.href} passHref>
+              <Button variant="ghost" className="text-slate-700 hover:text-purple-600">
+                {link.label}
               </Button>
-            </>
+            </Link>
+          ))}
+          {session && appNavLinks.map(link => (
+             <Link key={link.label} href={link.href} passHref>
+              <Button variant="ghost" className={isLandingPage ? "text-slate-700 hover:text-purple-600" : ""}>
+                {link.label}
+              </Button>
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* {!isLandingPage && <ThemeToggle />} */}
+
+          {session ? (
+            <Button onClick={handleSignOut} variant={isLandingPage ? "outline" : "default"} className={cn(isLandingPage && "border-purple-600 text-purple-600 hover:bg-purple-50 hover:text-purple-700")}>
+              Sign Out
+            </Button>
           ) : (
             <>
-              {/* Logged Out Links */}
-              <Link href="/about" passHref>
-                 {/* Adjust button style for landing page if needed */}
-                 <Button variant={isLandingPage ? "outline" : "ghost"} className={cn(isLandingPage && "text-white border-white/20 bg-transparent hover:bg-white/10")}>
-                  About
+              <Link href="/auth" passHref>
+                 <Button variant="ghost" className={cn(isLandingPage ? "text-slate-700 hover:text-purple-600" : "text-foreground")}>
+                   Login
                  </Button>
               </Link>
-              {/* <Link href="/pricing" passHref>
-                <Button variant={isLandingPage ? "outline" : "ghost"} className={cn(isLandingPage && "text-white border-white/20 bg-transparent hover:bg-white/10")}>Pricing</Button>
-              </Link> */}
               <Link href="/auth" passHref>
-                {/* Use primary button style for both, potentially override for landing if desired */}
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                   Get Started
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-5 py-2.5">
+                   Try Free
                 </Button>
               </Link>
             </>
           )}
         </div>
-        {/* Mobile Menu Placeholder */}
+        {/* Mobile Menu Placeholder - Implement if needed */}
         {/* <div className="md:hidden">...</div> */}
       </div>
     </nav>

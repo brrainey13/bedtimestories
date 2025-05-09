@@ -13,7 +13,9 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;   /* Dark Blue/Black Primary */
+    /* Main purple for buttons, accents on landing */
+    --primary-brand: 259 77% 60%; /* Approx purple-600 from Tailwind default, e.g. #8B5CF6 */
+    --primary: var(--primary-brand);
     --primary-foreground: 210 40% 98%; /* Almost White Text */
 
     --secondary: 210 40% 96.1%;     /* Light Gray */
@@ -30,9 +32,14 @@
 
     --border: 214.3 31.8% 91.4%;    /* Light Gray Border */
     --input: 214.3 31.8% 91.4%;     /* Light Gray Input */
-    --ring: 222.2 47.4% 11.2%;      /* Dark Ring */
+    --ring: var(--primary-brand);      /* Use brand purple for ring */
 
     --radius: 0.5rem;
+
+    /* Landing Page Specifics (can be overridden by utility classes too) */
+    --landing-text-primary: 224 71% 4%; /* Dark slate for main text - e.g. text-slate-900 */
+    --landing-text-secondary: 222 21% 31%; /* Lighter slate for secondary text - e.g. text-slate-600 */
+    --landing-pink: 330 82% 60%; /* Approx pink-500 */
   }
 
   .dark {
@@ -46,7 +53,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary is still your brand purple */
+    /* Primary in dark mode can be the lighter purple from design */
     --primary: 250 84% 78%;         /* HSL for #9b87f5 */
     --primary-foreground: 257 58% 10%; /* Dark text for contrast on purple */
 
@@ -64,8 +71,7 @@
 
     --border: 217.2 32.6% 17.5%;    /* Dark Gray Border */
     --input: 217.2 32.6% 17.5%;     /* Dark Gray Input */
-    --ring: 210 40% 98%;           /* Near White Ring */
-    /* --radius stays the same */
+    --ring: 250 84% 78%; /* Lighter purple for ring in dark mode */
   }
 
   /* Base Styles */
@@ -79,6 +85,19 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    @apply min-h-screen antialiased;
+    @apply min-h-screen antialiased font-sans; /* Ensure a default font */
+  }
+
+  /* Apply sans-serif font from your RootLayout if not default */
+  /* body {
+    font-family: var(--font-geist-sans); 
+  } */
+
+  /* Headings on landing page - adjust as needed */
+  .landing-heading {
+    @apply text-3xl font-bold text-slate-900 md:text-4xl text-center mb-4;
+  }
+  .landing-subheading {
+    @apply text-lg text-slate-600 text-center max-w-2xl mx-auto mb-12;
   }
 }
