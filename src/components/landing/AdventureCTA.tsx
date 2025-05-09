@@ -20,7 +20,7 @@ const AdventureCTA = () => {
               width={450}
               height={450}
               className="rounded-lg shadow-xl max-w-sm w-full md:max-w-md"
-              onError={(e) => (e.currentTarget.src = "https://via.placeholder.com/450x450/E9E1FF/7C3AED?text=Add+Image+Here")} // Fallback
+              onError={(e) => (e.currentTarget.src = "https://placehold.co/600x400")} // Fallback
             />
           </div>
 
