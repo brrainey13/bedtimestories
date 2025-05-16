@@ -1,178 +1,62 @@
 // src/config/presetOptions.ts
 
 import {
-    BookOpen,
-    Wand2,
-    Users,
-    Mountain,
-    PawPrint,
-    Crown,
-    Sword,
-    Clock,
-    Plus,
-    LucideIcon,
-    Rocket, // Added for Space setting
-    Waves, // Added for Ocean setting
-    Castle, // Added for Castle setting
-    Trees, // Added for Forest setting
-  } from "lucide-react";
-  
-  export interface PresetOption {
-    id: string;
-    label: string;
-    description: string;
-    icon: LucideIcon;
-    colorClass: string; // Using Tailwind class directly for simplicity
-  }
-  
-  // Define story themes
-  export const themes: PresetOption[] = [
-    {
-      id: "adventure",
-      label: "Adventure",
-      description: "An exciting journey filled with challenges.",
-      icon: Mountain,
-      colorClass: "border-orange-500/50 bg-orange-500/10 text-orange-400",
-    },
-    {
-      id: "friendship",
-      label: "Friendship",
-      description: "Working together and building bonds.",
-      icon: Users,
-      colorClass: "border-green-500/50 bg-green-500/10 text-green-400",
-    },
-    {
-      id: "learning",
-      label: "Learning",
-      description: "Discovering new things and growing.",
-      icon: BookOpen,
-      colorClass: "border-blue-500/50 bg-blue-500/10 text-blue-400",
-    },
-    {
-      id: "magic",
-      label: "Magic",
-      description: "Mysterious powers and enchanting events.",
-      icon: Wand2,
-      colorClass: "border-purple-500/50 bg-purple-500/10 text-purple-400",
-    },
-    {
-      id: "custom",
-      label: "Custom Theme",
-      description: "Create your own unique theme idea.",
-      icon: Plus,
-      colorClass: "border-gray-500/50 bg-gray-500/10 text-gray-400",
-    },
-  ];
-  
-  // Define story characters
-  export const characters: PresetOption[] = [
-    {
-      id: "dragon",
-      label: "Dragon",
-      description: "A friendly, colorful dragon.",
-      icon: PawPrint, // Using PawPrint as a placeholder
-      colorClass: "border-red-500/50 bg-red-500/10 text-red-400",
-    },
-    {
-      id: "princess",
-      label: "Princess",
-      description: "A brave and clever princess.",
-      icon: Crown,
-      colorClass: "border-pink-500/50 bg-pink-500/10 text-pink-400",
-    },
-    {
-      id: "wizard",
-      label: "Wizard",
-      description: "A wise, sometimes silly, wizard.",
-      icon: Wand2,
-      colorClass: "border-indigo-500/50 bg-indigo-500/10 text-indigo-400",
-    },
-    {
-      id: "knight",
-      label: "Knight",
-      description: "A noble knight who helps others.",
-      icon: Sword,
-      colorClass: "border-slate-500/50 bg-slate-500/10 text-slate-400",
-    },
-    {
-      id: "custom",
-      label: "Custom Character",
-      description: "Invent your own unique character.",
-      icon: Plus,
-      colorClass: "border-gray-500/50 bg-gray-500/10 text-gray-400",
-    },
-  ];
-  
-  // Define story settings
-  export const settings: PresetOption[] = [
-    {
-      id: "castle",
-      label: "Castle",
-      description: "An ancient magical castle.",
-      icon: Castle,
-      colorClass: "border-amber-500/50 bg-amber-500/10 text-amber-400",
-    },
-    {
-      id: "forest",
-      label: "Forest",
-      description: "An enchanted forest.",
-      icon: Trees,
-      colorClass: "border-emerald-500/50 bg-emerald-500/10 text-emerald-400",
-    },
-    {
-      id: "space",
-      label: "Space",
-      description: "The vast reaches of space.",
-      icon: Rocket,
-      colorClass: "border-violet-500/50 bg-violet-500/10 text-violet-400",
-    },
-    {
-      id: "ocean",
-      label: "Ocean",
-      description: "The deep blue ocean mysteries.",
-      icon: Waves,
-      colorClass: "border-cyan-500/50 bg-cyan-500/10 text-cyan-400",
-    },
-    {
-      id: "custom",
-      label: "Custom Setting",
-      description: "Imagine your own unique place.",
-      icon: Plus,
-      colorClass: "border-gray-500/50 bg-gray-500/10 text-gray-400",
-    },
-  ];
-  
-  // Define story length options
-  export const storyLengths: PresetOption[] = [
-    {
-      id: "3min",
-      label: "Short (~3 Min)",
-      description: "A quick, engaging tale.",
-      icon: Clock,
-      colorClass: "border-yellow-500/50 bg-yellow-500/10 text-yellow-400",
-    },
-    {
-      id: "5min",
-      label: "Medium (~5 Min)",
-      description: "A bit more detail and plot.",
-      icon: Clock,
-      colorClass: "border-orange-500/50 bg-orange-500/10 text-orange-400",
-    },
-    {
-      id: "10min",
-      label: "Long (~10 Min)",
-      description: "A richer story adventure.",
-      icon: Clock,
-      colorClass: "border-red-500/50 bg-red-500/10 text-red-400",
-    },
-    {
-      id: "custom",
-      label: "Custom Length",
-      description: "Specify your desired length.",
-      icon: Plus,
-      colorClass: "border-gray-500/50 bg-gray-500/10 text-gray-400",
-    },
-  ];
-  
-  // (Optional) Add mappings or descriptions if needed later, like in the original file
-  // export const storyLengthToWords: Record<string, number> = { ... };
+  BookOpen, Wand2, Users, Mountain, PawPrint, Crown, Sword, Clock, Plus, LucideIcon,
+  Rocket, Waves, Castle, Trees,
+  Heart, Shield, Smile, Star // Added for Morals
+} from "lucide-react";
+
+export interface PresetOption {
+  id: string;
+  label: string;
+  description: string; // May not be used in the new UI but good to keep for data structure
+  icon: LucideIcon;
+  colorClass: string; // For icon coloring if needed
+}
+
+// Story Themes (No longer used in this UI component, but keep for potential future use)
+export const themes: PresetOption[] = [
+  // ... your themes ...
+  {
+    id: "adventure",
+    label: "Adventure",
+    description: "An exciting journey filled with challenges.",
+    icon: Mountain,
+    colorClass: "text-orange-400",
+  },
+  // ... more themes
+];
+
+// Story Characters (Used for Hero Buttons)
+export const characters: PresetOption[] = [
+  { id: "dragon", label: "Dragon", description: "A friendly dragon.", icon: PawPrint, colorClass: "text-red-500" },
+  { id: "wizard", label: "Wizard", description: "A wise wizard.", icon: Wand2, colorClass: "text-indigo-500" },
+  { id: "princess", label: "Princess", description: "A brave princess.", icon: Crown, colorClass: "text-pink-500" },
+  { id: "knight", label: "Knight", description: "A noble knight.", icon: Sword, colorClass: "text-slate-500" },
+  // { id: "custom", label: "Custom Character", description: "Invent your own.", icon: Plus, colorClass: "text-gray-500" }, // Not used in new UI
+];
+
+// Story Settings (Used for Setting Dropdown)
+export const settings: PresetOption[] = [
+  { id: "magical-forest", label: "Magical Forest", description: "An enchanted forest.", icon: Trees, colorClass: "text-emerald-500" },
+  { id: "castle", label: "Castle", description: "An ancient castle.", icon: Castle, colorClass: "text-amber-500" },
+  { id: "space", label: "Space", description: "The vastness of space.", icon: Rocket, colorClass: "text-violet-500" },
+  // { id: "custom", label: "Custom Setting", description: "Your unique place.", icon: Plus, colorClass: "text-gray-500" }, // Not used
+];
+
+// Story Lengths (Used for Length Buttons)
+export const storyLengths: PresetOption[] = [
+  { id: "short", label: "Short", description: "~3 Min", icon: Clock, colorClass: "text-yellow-600" },
+  { id: "medium", label: "Medium", description: "~5 Min", icon: Clock, colorClass: "text-orange-500" },
+  { id: "long", label: "Long", description: "~10 Min", icon: Clock, colorClass: "text-red-500" },
+  // { id: "custom", label: "Custom Length", description: "Specify length.", icon: Plus, colorClass: "text-gray-500" }, // Not used
+];
+
+// Story Morals (Used for Moral Dropdown)
+export const morals: PresetOption[] = [
+  { id: "friendship", label: "Friendship", description: "About friends.", icon: Users, colorClass: "text-green-500" },
+  { id: "bravery", label: "Bravery", description: "Being courageous.", icon: Shield, colorClass: "text-red-600" },
+  { id: "kindness", label: "Kindness", description: "Being kind to others.", icon: Heart, colorClass: "text-pink-400" },
+  { id: "honesty", label: "Honesty", description: "Telling the truth.", icon: Smile, colorClass: "text-blue-500" }, // Using Smile icon
+  { id: "perseverance", label: "Perseverance", description: "Never giving up.", icon: Star, colorClass: "text-yellow-500" },
+];

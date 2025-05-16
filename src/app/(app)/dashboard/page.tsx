@@ -1,40 +1,27 @@
 // src/app/(app)/dashboard/page.tsx
 'use client';
 
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Wand2, Bot } from 'lucide-react';
-import PresetGenerator from './components/PresetGenerator'; // Import new component
-import ChatInterface from './components/ChatInterface';   // Import new component
+import React from 'react';
+// Removed: import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// Removed: import { Bot } from 'lucide-react'; // Wand2 is still used by PresetGenerator's button
+import PresetGenerator from './components/PresetGenerator';
+// Removed: import ChatInterface from './components/ChatInterface';
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState('presets'); // Default tab
+  // Removed: const [activeTab, setActiveTab] = useState('presets');
 
   return (
-    <div className="space-y-6"> {/* Reduced top-level spacing */}
+    <div className="space-y-6">
       <h1 className="text-3xl font-bold text-center">Create Your Magical Story</h1>
       <p className="text-muted-foreground text-center max-w-2xl mx-auto">
-        Choose your adventure! Use presets for guided creation or chat directly with our story AI to bring your ideas to life.
+        Use the presets below to guide the creation of your unique story.
       </p>
 
-       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto"> {/* Center tabs */}
-          <TabsTrigger value="presets"><Wand2 className="mr-2 h-4 w-4" />Presets</TabsTrigger>
-          <TabsTrigger value="chat"><Bot className="mr-2 h-4 w-4" />Chat</TabsTrigger>
-        </TabsList>
-
-        {/* --- Presets Tab --- */}
-         <TabsContent value="presets" className="mt-6">
-              <PresetGenerator /> {/* Render the dedicated component */}
-         </TabsContent>
-
-        {/* --- Chat Tab --- */}
-        <TabsContent value="chat" className="mt-6 flex justify-center"> {/* Center chat interface */}
-             <div className="w-full max-w-4xl"> {/* Constrain chat width */}
-                 <ChatInterface /> {/* Render the dedicated component */}
-             </div>
-        </TabsContent>
-      </Tabs>
+      {/* Removed Tabs structure */}
+      {/* Directly render PresetGenerator */}
+      <div className="mt-6"> {/* Added a div for consistent margin like TabsContent had */}
+        <PresetGenerator />
+      </div>
     </div>
   );
 }
