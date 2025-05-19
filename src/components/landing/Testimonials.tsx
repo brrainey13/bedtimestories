@@ -31,9 +31,9 @@ const Testimonials = () => {
     <section id="testimonials" className="py-16 md:py-24 bg-white">
       <div className="container mx-auto px-4">
         <h2 className="landing-heading">Happy Little Readers</h2>
-        {/* <p className="landing-subheading">
+        {<p className="landing-subheading">
           See what parents are saying about their StoryMagic experience.
-        </p> */}
+        </p> }
         <div className="grid md:grid-cols-3 gap-8 mt-12">
           {testimonialsData.map((testimonial, index) => (
             <TestimonialCard

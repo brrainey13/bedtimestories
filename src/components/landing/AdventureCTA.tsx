@@ -19,7 +19,7 @@ const AdventureCTA = () => {
               alt="Child reading a magical book"
               width={450}
               height={450}
-              className="rounded-lg shadow-xl max-w-sm w-full md:max-w-md"
+              className="rounded-lg max-w-sm w-full md:max-w-md"
               onError={(e) => (e.currentTarget.src = "https://placehold.co/600x400")} // Fallback
             />
           </div>

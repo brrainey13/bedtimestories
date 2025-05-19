@@ -9,7 +9,7 @@ import { PlayCircle } from 'lucide-react';
 
 const Hero = () => {
   return (
-    <section className="container mx-auto px-4 py-16 md:py-24 min-h-[calc(100vh-4rem)] flex items-center">
+    <section className="flex items-center justify-center min-h-screen container mx-auto px-4">
       <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
         {/* Text Content */}
         <motion.div
