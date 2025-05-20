@@ -2,9 +2,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
+// import { ThemeProvider } from "@/components/providers/ThemeProvider"; // REMOVE
 import { AuthProvider } from "@/components/providers/AuthProvider";
-import { Toaster } from "@/components/ui/sonner"; // <-- Import Sonner's Toaster
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,21 +26,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    // Remove suppressHydrationWarning if ThemeProvider is completely gone
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
+        {/* <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light" // Set to light
+          enableSystem={false} // Disable system theme
           disableTransitionOnChange
-        >
+        > */}
           <AuthProvider>
             {children}
-            <Toaster richColors position="top-right" /> {/* <-- Add Sonner Toaster here */}
+            <Toaster richColors position="top-right" />
           </AuthProvider>
-        </ThemeProvider>
+        {/* </ThemeProvider> */}
       </body>
     </html>
   );

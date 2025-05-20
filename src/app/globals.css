@@ -3,76 +3,50 @@
 
 @layer base {
   :root {
-    /* --- LIGHT THEME (Default) --- */
-    --background: 0 0% 100%;        /* #FFFFFF */
-    --foreground: 222.2 84% 4.9%;   /* #0A0A0A approx */
+    /* --- LIGHT THEME (Only Theme) --- */
+    /* Base colors matching the target UI style (grays, black, white) */
+    --background: 220 20% 98%;      /* #F9FAFB - Very light gray page background */
+    --foreground: 220 20% 10%;     /* #111827 - Dark text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;              /* #FFFFFF - White for cards, inputs */
+    --card-foreground: 220 20% 10%; /* #111827 - Dark text on cards */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 20% 10%;
 
-    /* Main purple for buttons, accents on landing */
-    --primary-brand: 259 77% 60%; /* Approx purple-600 from Tailwind default, e.g. #8B5CF6 */
-    --primary: var(--primary-brand);
-    --primary-foreground: 210 40% 98%; /* Almost White Text */
+    /* Primary action color - dark gray/black for "Create Story" button */
+    --primary: 220 20% 13%;         /* #1F2937 or #111827 */
+    --primary-foreground: 0 0% 98%; /* #FAFAFA - White text on primary button */
 
-    --secondary: 210 40% 96.1%;     /* Light Gray */
-    --secondary-foreground: 222.2 47.4% 11.2%; /* Dark Text */
+    /* Secondary can be a lighter gray or accent if needed */
+    --secondary: 220 15% 92%;       /* #E5E7EB - Light gray */
+    --secondary-foreground: 220 20% 20%; /* #374151 - Darker gray text */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%; /* Mid Gray Text */
+    --muted: 220 15% 95%;           /* #F3F4F6 - Muted backgrounds */
+    --muted-foreground: 220 10% 45%;/* #6B7280 - Muted text (placeholder) */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 15% 90%;          /* #E5E7EB - Accent for hover states */
+    --accent-foreground: 220 20% 15%;/* #1F2937 */
 
-    --destructive: 0 84.2% 60.2%;   /* Red */
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%;   /* Red for errors */
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;    /* Light Gray Border */
-    --input: 214.3 31.8% 91.4%;     /* Light Gray Input */
-    --ring: var(--primary-brand);      /* Use brand purple for ring */
+    --border: 220 15% 87%;          /* #D1D5DB - Borders for inputs, cards */
+    --input: 220 15% 87%;           /* Border color for inputs, actual bg is card or transparent */
+    --ring: 220 20% 13%;            /* Focus ring, can match primary */
 
     --radius: 0.5rem;
 
-    /* Landing Page Specifics (can be overridden by utility classes too) */
-    --landing-text-primary: 224 71% 4%; /* Dark slate for main text - e.g. text-slate-900 */
-    --landing-text-secondary: 222 21% 31%; /* Lighter slate for secondary text - e.g. text-slate-600 */
-    --landing-pink: 330 82% 60%; /* Approx pink-500 */
+    /* Landing Page Specifics (if different, but we are focusing on app UI) */
+    /* --landing-text-primary: 224 71% 4%;
+    --landing-text-secondary: 222 21% 31%; */
   }
 
+  /* REMOVE THE ENTIRE .dark BLOCK
   .dark {
-    /* --- STANDARD DARK THEME --- */
-    --background: 222.2 84% 4.9%;   /* Near Black */
-    --foreground: 210 40% 98%;     /* Near White */
-
-    --card: 222.2 84% 4.9%;        /* Match background or slightly lighter */
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    /* Primary in dark mode can be the lighter purple from design */
-    --primary: 250 84% 78%;         /* HSL for #9b87f5 */
-    --primary-foreground: 257 58% 10%; /* Dark text for contrast on purple */
-
-    --secondary: 217.2 32.6% 17.5%;  /* Dark Gray */
-    --secondary-foreground: 210 40% 98%; /* Near White */
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%; /* Lighter Gray Text */
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;   /* Darker Red */
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;    /* Dark Gray Border */
-    --input: 217.2 32.6% 17.5%;     /* Dark Gray Input */
-    --ring: 250 84% 78%; /* Lighter purple for ring in dark mode */
+     ...
   }
+  */
 
   /* Base Styles */
   * {
@@ -85,13 +59,8 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    @apply min-h-screen antialiased font-sans; /* Ensure a default font */
+    @apply min-h-screen antialiased font-sans;
   }
-
-  /* Apply sans-serif font from your RootLayout if not default */
-  /* body {
-    font-family: var(--font-geist-sans); 
-  } */
 
   /* Headings on landing page - adjust as needed */
   .landing-heading {
