@@ -19,50 +19,50 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Parse Request Body (expected from PresetGenerator)
+    // 2. Parse Request Body
+    // Expecting { prompt: "user_prompt_string", data: { userId, source, ...other_details } }
     const body = await req.json();
     const {
-      // messages, // Removed: No longer expecting 'messages' for chat
-      data // Custom data payload (includes presets, userId for verification, source)
+      prompt: userPromptFromClient, // This is the userPrompt constructed in PresetGenerator
+      data: customData // This is the 'payload' object from PresetGenerator
     } = body;
 
-    const clientUserId = data?.userId;
-    const source = data?.source; // Should be 'preset'
-
-    // Verify the user ID sent by the client matches the authenticated user
-    if (!clientUserId || clientUserId !== user.id) {
-         return NextResponse.json({ error: 'User ID mismatch or missing' }, { status: 403 });
+    // Validate essential parts of the customData
+    if (!customData?.userId || customData.userId !== user.id) {
+         return NextResponse.json({ error: 'User ID mismatch or missing in custom data' }, { status: 403 });
+    }
+    if (customData?.source !== 'preset') {
+      console.error("API: Invalid source in custom data", customData);
+      return NextResponse.json({ error: 'Invalid source in custom data' }, { status: 400 });
+    }
+    if (!userPromptFromClient || typeof userPromptFromClient !== 'string') {
+        console.error("API: Prompt string is missing or invalid", userPromptFromClient);
+        return NextResponse.json({ error: 'Prompt string is missing or invalid' }, { status: 400 });
     }
 
-    // Ensure it's a preset request (though now it's the only type)
-    if (source !== 'preset' || !data?.theme || !data?.character || !data?.setting || !data?.storyLength) {
-      console.error("API: Invalid or missing preset data", data);
-      return NextResponse.json({ error: 'Invalid or missing preset data' }, { status: 400 });
-    }
+    // 3. Log the incoming request details (optional but good for debugging)
+    console.log(`API: Generating story from preset for user: ${user.id}`);
+    console.log(`API: Received prompt: "${userPromptFromClient.substring(0, 100)}..."`);
+    console.log("API: Received custom data:", customData);
 
-    // 3. Prepare Messages for AI (Preset Mode Only)
-    console.log('API: Generating story from presets for user:', user.id);
-    const userPrompt = `Write a children's bedtime story with the following elements:
-        - Theme: ${data.theme}
-        - Main Character: ${data.character}
-        - Setting: ${data.setting}
-        - Desired Length: Approximately ${data.storyLength} reading time. Make it engaging and imaginative.`;
 
+    // 4. Prepare Messages for AI using the prompt from the client
     const messagesForAI: CoreMessage[] = [
       { role: 'system', content: presetSystemPrompt },
-      { role: 'user', content: userPrompt },
+      { role: 'user', content: userPromptFromClient }, // Use the prompt directly from the client
     ];
 
-    // 4. Stream Text Generation
+    // 5. Stream Text Generation
     const result = streamText({
-      model: openai('gpt-4o-mini'), // Or your preferred model
+      model: openai('gpt-4o-mini'), // Using gpt-4o-mini as a modern, efficient model.
+                                  // If 'gpt-4.1-mini' becomes a known alias, you can use it.
       messages: messagesForAI,
        onError: (err) => {
             console.error("AI Streaming Error:", err);
        },
     });
 
-    // 5. Return AI Stream Response
+    // 6. Return AI Stream Response
     return result.toDataStreamResponse();
 
   } catch (error: any) {
