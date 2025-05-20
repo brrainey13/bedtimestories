@@ -54,8 +54,7 @@ export async function POST(req: Request) {
 
     // 5. Stream Text Generation
     const result = streamText({
-      model: openai('gpt-4o-mini'), // Using gpt-4o-mini as a modern, efficient model.
-                                  // If 'gpt-4.1-mini' becomes a known alias, you can use it.
+      model: openai('gpt-4.1-mini'), // Using gpt-4.1-mini (as of 2025-05-19)
       messages: messagesForAI,
        onError: (err) => {
             console.error("AI Streaming Error:", err);
