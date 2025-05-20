@@ -45,6 +45,7 @@ export async function POST(req: Request) {
             prompt: prompt,
             n: 1,
             size: '1024x1024', // Valid for gpt-image-1
+
             providerOptions: {
                 openai: {
                     quality: 'medium', // Valid for gpt-image-1
