@@ -10,22 +10,32 @@ export default function AppLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-40 w-full border-b bg-background">
-        <div className="flex h-16 items-center justify-between w-full max-w-7xl mx-auto px-4 md:px-6">
-           <Link href="/dashboard" className="font-semibold mr-6 text-gray-800"> {/* Ensure text color is good for light bg */}
-                App Name
-           </Link>
-           <nav className="flex items-center space-x-4 lg:space-x-6 mr-auto">
-               <Link href="/stories" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                   My Stories
-               </Link>
-               <Link href="/profile" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                   Profile
-               </Link>
-           </nav>
-           {/* <ThemeToggle /> REMOVE */}
-        </div>
-      </header>
+      <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur border-b shadow-sm">
+  <nav
+    className="flex items-center justify-between h-20 max-w-7xl mx-auto px-4 md:px-8"
+    aria-label="Main navigation"
+  >
+    <div className="flex items-center">
+      <Link href="/dashboard" className="font-bold text-lg text-gray-900 hover:text-blue-700 transition-colors">
+        Tale Tinker
+      </Link>
+    </div>
+    <div className="flex items-center space-x-6">
+      <Link
+        href="/stories"
+        className="text-base font-medium text-gray-700 hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded transition-colors"
+      >
+        My Stories
+      </Link>
+      <Link
+        href="/profile"
+        className="text-base font-medium text-gray-700 hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded transition-colors"
+      >
+        Profile
+      </Link>
+    </div>
+  </nav>
+</header>
 
       <div className="flex-grow w-full flex flex-col items-center py-6 px-4 md:px-6 bg-gray-50"> {/* Added light gray bg for content area */}
           <main className="w-full max-w-7xl">

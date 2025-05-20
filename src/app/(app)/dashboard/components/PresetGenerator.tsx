@@ -173,163 +173,168 @@ export default function PresetGenerator() {
         !selectedHero || !heroName.trim() || !selectedSetting || !selectedLength || !selectedMoral;
 
     return (
-        // Card-like container for the form
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg max-w-lg mx-auto">
-            <h2 className="text-xl font-semibold text-gray-800 mb-1 text-left">Quick Story Builder</h2>
-            <form onSubmit={handlePresetSubmit} className="space-y-6 mt-6">
-                {/* Hero Selection */}
-                <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Choose Your Hero</Label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        {characters.filter(c => c.id !== 'custom').map((hero) => (
-                            <Button
-                                key={hero.id}
-                                type="button"
-                                variant="outline" // Use outline and style selected state manually
-                                onClick={() => setSelectedHero(hero.id)}
-                                className={`flex flex-col items-center justify-center p-3 h-auto min-h-[70px] space-y-1 rounded-lg transition-all text-xs font-medium 
-                                            border
-                                            ${selectedHero === hero.id
-                                                ? 'bg-gray-800 text-white border-gray-800 ring-2 ring-gray-700' // Dark gray selected
-                                                : 'bg-gray-200 text-gray-700 border-gray-200 hover:bg-gray-300' // Light gray unselected
-                                            }`}
-                            >
-                                <hero.icon className={`h-5 w-5 mb-0.5 ${selectedHero === hero.id ? 'text-white' : hero.colorClass || 'text-gray-600'}`} />
-                                <span>{hero.label}</span>
-                            </Button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Hero's Name */}
-                <div>
-                    <Label htmlFor="heroName" className="text-sm font-medium text-gray-700">Hero's Name</Label>
-                    <Input
-                        id="heroName"
-                        type="text"
-                        value={heroName}
-                        onChange={(e) => setHeroName(e.target.value)}
-                        placeholder="Enter a name..."
-                        className="mt-1 w-full bg-white border-gray-300 text-gray-800 placeholder-gray-400 focus:border-gray-500 focus:ring-gray-500"
-                        required
-                    />
-                </div>
-
-                {/* Story Setting */}
-                <div>
-                    <Label htmlFor="storySetting" className="text-sm font-medium text-gray-700">Story Setting</Label>
-                    <Select value={selectedSetting} onValueChange={setSelectedSetting}>
-                        <SelectTrigger id="storySetting" className="w-full mt-1 bg-white border-gray-300 text-gray-800 focus:border-gray-500 focus:ring-gray-500">
-                            <SelectValue placeholder="Select a setting" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border-gray-300 text-gray-800">
-                            {settings.filter(s => s.id !== 'custom').map((setting) => (
-                                <SelectItem key={setting.id} value={setting.id} className="focus:bg-gray-100">
-                                    {setting.label}
-                                </SelectItem>
+        // Card-like container for the form and the generated story
+        // Allow this main wrapper to be wider for the story card
+        <div className="space-y-8">
+            {/* Form Card */}
+            <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg max-w-lg mx-auto">
+                <h2 className="text-xl font-semibold text-gray-800 mb-1 text-left">Quick Story Builder</h2>
+                <form onSubmit={handlePresetSubmit} className="space-y-6 mt-6">
+                    {/* Hero Selection */}
+                    <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Choose Your Hero</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {characters.filter(c => c.id !== 'custom').map((hero) => (
+                                <Button
+                                    key={hero.id}
+                                    type="button"
+                                    variant="outline" // Use outline and style selected state manually
+                                    onClick={() => setSelectedHero(hero.id)}
+                                    className={`flex flex-col items-center justify-center p-3 h-auto min-h-[70px] space-y-1 rounded-lg transition-all text-xs font-medium 
+                                                border
+                                                ${selectedHero === hero.id
+                                                    ? 'bg-gray-800 text-white border-gray-800 ring-2 ring-gray-700' // Dark gray selected
+                                                    : 'bg-gray-200 text-gray-700 border-gray-200 hover:bg-gray-300' // Light gray unselected
+                                                }`}
+                                >
+                                    <hero.icon className={`h-5 w-5 mb-0.5 ${selectedHero === hero.id ? 'text-white' : hero.colorClass || 'text-gray-600'}`} />
+                                    <span>{hero.label}</span>
+                                </Button>
                             ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                {/* Story Length */}
-                <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-2 block">Story Length</Label>
-                    <div className="grid grid-cols-3 gap-3">
-                        {storyLengths.filter(l => l.id !== 'custom').map((length) => (
-                            <Button
-                                key={length.id}
-                                type="button"
-                                variant="outline"
-                                onClick={() => setSelectedLength(length.id)}
-                                className={`rounded-md text-sm h-10 font-medium border
-                                            ${selectedLength === length.id 
-                                                ? 'bg-gray-500 text-white border-gray-500 ring-2 ring-gray-400' // Medium gray selected
-                                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                                            }`}
-                            >
-                                {length.label.replace(' (~', '').replace(' Min)', '').replace('Medium', 'Med')}
-                            </Button>
-                        ))}
+                        </div>
                     </div>
-                </div>
 
-                {/* Story Moral */}
-                <div>
-                    <Label htmlFor="storyMoral" className="text-sm font-medium text-gray-700">Story Moral</Label>
-                    <Select value={selectedMoral} onValueChange={setSelectedMoral}>
-                        <SelectTrigger id="storyMoral" className="w-full mt-1 bg-white border-gray-300 text-gray-800 focus:border-gray-500 focus:ring-gray-500">
-                            <SelectValue placeholder="Select a moral" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border-gray-300 text-gray-800">
-                            {morals.map((moral) => (
-                                <SelectItem key={moral.id} value={moral.id} className="focus:bg-gray-100">
-                                    {moral.label}
-                                </SelectItem>
+                    {/* Hero's Name */}
+                    <div>
+                        <Label htmlFor="heroName" className="text-sm font-medium text-gray-700">Hero's Name</Label>
+                        <Input
+                            id="heroName"
+                            type="text"
+                            value={heroName}
+                            onChange={(e) => setHeroName(e.target.value)}
+                            placeholder="Enter a name..."
+                            className="mt-1 w-full bg-white border-gray-300 text-gray-800 placeholder-gray-400 focus:border-gray-500 focus:ring-gray-500"
+                            required
+                        />
+                    </div>
+
+                    {/* Story Setting */}
+                    <div>
+                        <Label htmlFor="storySetting" className="text-sm font-medium text-gray-700">Story Setting</Label>
+                        <Select value={selectedSetting} onValueChange={setSelectedSetting}>
+                            <SelectTrigger id="storySetting" className="w-full mt-1 bg-white border-gray-300 text-gray-800 focus:border-gray-500 focus:ring-gray-500">
+                                <SelectValue placeholder="Select a setting" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border-gray-300 text-gray-800">
+                                {settings.filter(s => s.id !== 'custom').map((setting) => (
+                                    <SelectItem key={setting.id} value={setting.id} className="focus:bg-gray-100">
+                                        {setting.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Story Length */}
+                    <div>
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Story Length</Label>
+                        <div className="grid grid-cols-3 gap-3">
+                            {storyLengths.filter(l => l.id !== 'custom').map((length) => (
+                                <Button
+                                    key={length.id}
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setSelectedLength(length.id)}
+                                    className={`rounded-md text-sm h-10 font-medium border
+                                                ${selectedLength === length.id 
+                                                    ? 'bg-gray-500 text-white border-gray-500 ring-2 ring-gray-400' // Medium gray selected
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                                }`}
+                                >
+                                    {length.label.replace(' (~', '').replace(' Min)', '').replace('Medium', 'Med')}
+                                </Button>
                             ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                        </div>
+                    </div>
 
-                <Button
-                    type="submit"
-                    size="lg"
-                    className={`w-full transition-transform duration-150 bg-gray-900 hover:bg-gray-800 text-white text-base font-semibold py-3
-                                ${isSubmitDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:scale-105 active:scale-95 cursor-pointer'
+                    {/* Story Moral */}
+                    <div>
+                        <Label htmlFor="storyMoral" className="text-sm font-medium text-gray-700">Story Moral</Label>
+                        <Select value={selectedMoral} onValueChange={setSelectedMoral}>
+                            <SelectTrigger id="storyMoral" className="w-full mt-1 bg-white border-gray-300 text-gray-800 focus:border-gray-500 focus:ring-gray-500">
+                                <SelectValue placeholder="Select a moral" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border-gray-300 text-gray-800">
+                                {morals.map((moral) => (
+                                    <SelectItem key={moral.id} value={moral.id} className="focus:bg-gray-100">
+                                        {moral.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <Button
+                        type="submit"
+                        size="lg"
+                        className={`w-full transition-transform duration-150 bg-gray-900 hover:bg-gray-800 text-white text-base font-semibold py-3
+                                    ${isSubmitDisabled ? 'opacity-60 cursor-not-allowed' : 'hover:scale-105 active:scale-95 cursor-pointer'
                             }`}
-                    disabled={isSubmitDisabled}
-                >
-                    {(isLoadingStory || isLoadingImage) ? (
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    ) : (
-                        <Sparkles className="mr-2 h-5 w-5" /> // Changed to Sparkles for variety
-                    )}
-                    Create My Story
-                </Button>
-                 {error && (
-                     <p className="text-sm text-red-600 text-center mt-2 flex items-center justify-center gap-1">
-                         <AlertTriangle className="h-4 w-4" /> Story Error: {error.message}
-                     </p>
-                 )}
-             </form>
+                        disabled={isSubmitDisabled}
+                    >
+                        {(isLoadingStory || isLoadingImage) ? (
+                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        ) : (
+                            <Sparkles className="mr-2 h-5 w-5" /> // Changed to Sparkles for variety
+                        )}
+                        Create My Story
+                    </Button>
+                     {error && (
+                         <p className="text-sm text-red-600 text-center mt-2 flex items-center justify-center gap-1">
+                             <AlertTriangle className="h-4 w-4" /> Story Error: {error.message}
+                         </p>
+                     )}
+                 </form>
+            </div>
 
-             {/* Result Display Card */}
+             {/* Result Display Card - now outside the max-w-lg of the form card */}
              {(isLoadingStory || isLoadingImage || completion) && (
-                 <div className="mt-8 border bg-white text-gray-800 rounded-xl shadow-sm p-6 space-y-6">
-                     <div className="grid gap-1.5">
-                        <h3 className="font-semibold text-lg text-gray-800">Generated Story</h3>
-                        <p className="text-sm text-gray-500">Here's the magical tale crafted for you.</p>
+                 <div className="mt-10 bg-white text-gray-800 rounded-xl shadow-lg p-6 sm:p-8 space-y-6 max-w-2xl mx-auto">
+                     <div className="text-center">
+                        <h3 className="font-semibold text-2xl text-gray-800">Generated Story</h3>
+                        <p className="text-md text-gray-600 mt-1">Here's the magical tale crafted for you.</p>
                      </div>
 
                      {isLoadingImage && (
-                         <div className="flex justify-center items-center h-64 bg-gray-100 rounded-md">
-                             <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-                             <p className="ml-2 text-gray-500">Generating Illustration...</p>
+                         <div className="flex flex-col justify-center items-center h-72 bg-gray-50 rounded-lg border border-gray-200">
+                             <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+                             <p className="ml-2 text-gray-600 mt-3 text-base">Generating Illustration...</p>
                          </div>
                      )}
                      {generatedImageUrl && !isLoadingImage && (
-                         <div className="flex justify-center">
-                             <NextImage src={generatedImageUrl} alt="Generated Story Illustration" width={512} height={512} className="rounded-lg shadow-md" unoptimized />
+                         <div className="flex justify-center my-6">
+                             <NextImage src={generatedImageUrl} alt="Generated Story Illustration" width={512} height={512} className="rounded-xl shadow-xl border-2 border-gray-100" unoptimized />
                          </div>
                      )}
                      {!generatedImageUrl && !isLoadingImage && completion && currentStoryId && (
-                        <div className="text-center text-gray-500 py-4">
-                            <ImageIcon className="inline-block h-5 w-5 mr-1"/> Image will appear here once generated.
+                        <div className="text-center text-gray-500 py-6 bg-gray-50 rounded-lg border border-gray-200">
+                            <ImageIcon className="inline-block h-6 w-6 mr-2 text-blue-500"/> 
+                            <span className="align-middle text-base">Illustration coming soon...</span>
                         </div>
                     )}
 
                      {isLoadingStory && !completion && (
-                         <div className="space-y-2">
-                             <Skeleton className="h-4 w-full bg-gray-200" />
-                             <Skeleton className="h-4 w-full bg-gray-200" />
-                             <Skeleton className="h-4 w-[75%] bg-gray-200" />
-                             <p className="text-sm text-gray-500 text-center mt-2">Generating story text...</p>
+                         <div className="space-y-3 py-4">
+                             <Skeleton className="h-5 w-full bg-gray-200 rounded" />
+                             <Skeleton className="h-5 w-full bg-gray-200 rounded" />
+                             <Skeleton className="h-5 w-[85%] bg-gray-200 rounded" />
+                             <p className="text-base text-gray-500 text-center pt-3">Crafting your magical story...</p>
                          </div>
                      )}
                      {completion && (
-                         <div className="prose max-w-none text-gray-700">
+                         <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
                              {completion.split('\n\n').map((paragraph, index) => (
-                                 paragraph.trim() && <p key={index}>{paragraph}</p>
+                                 paragraph.trim() && <p key={index} className="mb-4">{paragraph}</p>
                              ))}
                          </div>
                      )}
