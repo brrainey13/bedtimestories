@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
     // 5. Stream Text Generation
     const result = streamText({
-      model: openai('gpt-4.1-mini'), // Using gpt-4.1-mini (as of 2025-05-19)
+      model: openai('gpt-4.1-nano'), // Using gpt-4.1-mini (as of 2025-05-19)
       messages: messagesForAI,
        onError: (err) => {
             console.error("AI Streaming Error:", err);

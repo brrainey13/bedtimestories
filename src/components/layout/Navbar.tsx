@@ -56,7 +56,7 @@ const Navbar = () => {
              isLandingPage ? "text-purple-700" : "text-foreground"
              )}>
           {/* <Image src="/logo-placeholder.svg" alt="StoryMagic Logo" width={32} height={32} className="mr-2" /> */}
-          StoryMagic
+          Tale Tinker
         </Link>
 
         <div className="hidden md:flex items-center gap-2">
