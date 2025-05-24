@@ -33,7 +33,7 @@ export const characters: PresetOption[] = [
   { id: "wizard", label: "Wizard", description: "A wise wizard.", icon: Wand2, colorClass: "text-indigo-500" },
   { id: "princess", label: "Princess", description: "A brave princess.", icon: Crown, colorClass: "text-pink-500" },
   { id: "knight", label: "Knight", description: "A noble knight.", icon: Sword, colorClass: "text-slate-500" },
-  // { id: "custom", label: "Custom Character", description: "Invent your own.", icon: Plus, colorClass: "text-gray-500" }, // Not used in new UI
+  { id: "custom", label: "Custom Hero", description: "Invent your own hero.", icon: Plus, colorClass: "text-gray-500" },
 ];
 
 // Story Settings (Used for Setting Dropdown)
@@ -41,7 +41,8 @@ export const settings: PresetOption[] = [
   { id: "magical-forest", label: "Magical Forest", description: "An enchanted forest.", icon: Trees, colorClass: "text-emerald-500" },
   { id: "castle", label: "Castle", description: "An ancient castle.", icon: Castle, colorClass: "text-amber-500" },
   { id: "space", label: "Space", description: "The vastness of space.", icon: Rocket, colorClass: "text-violet-500" },
-  // { id: "custom", label: "Custom Setting", description: "Your unique place.", icon: Plus, colorClass: "text-gray-500" }, // Not used
+  { id: "underwater-kingdom", label: "Underwater Kingdom", description: "A kingdom beneath the waves.", icon: Waves, colorClass: "text-blue-400" }, 
+  { id: "custom", label: "Custom Setting", description: "Describe your own setting.", icon: Plus, colorClass: "text-gray-500" },
 ];
 
 // Story Lengths (Used for Length Buttons)
@@ -59,4 +60,5 @@ export const morals: PresetOption[] = [
   { id: "kindness", label: "Kindness", description: "Being kind to others.", icon: Heart, colorClass: "text-pink-400" },
   { id: "honesty", label: "Honesty", description: "Telling the truth.", icon: Smile, colorClass: "text-blue-500" }, // Using Smile icon
   { id: "perseverance", label: "Perseverance", description: "Never giving up.", icon: Star, colorClass: "text-yellow-500" },
+  { id: "custom", label: "Custom Moral", description: "Define your own moral.", icon: Plus, colorClass: "text-gray-500" },
 ];
