@@ -1,9 +1,10 @@
 // src/app/(app)/stories/page.tsx
+// MODIFIED: To fetch and display the actual story title and use it for image alt text.
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { createClient } from '@/utils/supabase/client'; // Use client-side Supabase client
+import { createClient } from '@/utils/supabase/client';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
@@ -11,12 +12,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Terminal } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns'; // For relative time formatting
+import { formatDistanceToNow } from 'date-fns';
 
 // Define a type for the story data we fetch
 interface Story {
     id: string;
     created_at: string;
+    title: string; // <<< MODIFIED: Added title
     theme: string | null;
     character: string | null;
     setting: string | null;
@@ -34,8 +36,6 @@ export default function MyStoriesPage() {
         const fetchStories = async () => {
             if (!session?.user?.id) {
                 setLoading(false);
-                // Optionally set an error or handle appropriately if user is not logged in
-                // setError("You must be logged in to view your stories.");
                 return;
             }
 
@@ -46,7 +46,8 @@ export default function MyStoriesPage() {
             try {
                 const { data, error: fetchError } = await supabase
                     .from('stories')
-                    .select('id, created_at, theme, character, setting, content, image_url')
+                    // <<< MODIFIED: Added 'title' to select
+                    .select('id, created_at, title, theme, character, setting, content, image_url')
                     .eq('user_id', session.user.id)
                     .order('created_at', { ascending: false });
 
@@ -64,7 +65,7 @@ export default function MyStoriesPage() {
         };
 
         fetchStories();
-    }, [session]); // Re-run effect if session changes
+    }, [session]);
 
     return (
         <div className="space-y-6">
@@ -75,7 +76,7 @@ export default function MyStoriesPage() {
 
             {loading && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[...Array(3)].map((_, i) => ( // Show 3 loading skeletons
+                    {[...Array(3)].map((_, i) => (
                        <Card key={i}>
                            <CardHeader>
                                <Skeleton className="h-48 w-full rounded-t-lg" />
@@ -118,11 +119,12 @@ export default function MyStoriesPage() {
                                 {story.image_url ? (
                                     <Image
                                         src={story.image_url}
-                                        alt={`Illustration for story ${story.id}`}
-                                        width={400} // Adjust aspect ratio as needed
+                                        // <<< MODIFIED: Improved alt text using story.title
+                                        alt={story.title && story.title !== "N/A" ? `Illustration for "${story.title}"` : `Illustration for story ${story.id}`}
+                                        width={400}
                                         height={300}
                                         className="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-300"
-                                        unoptimized // If using Supabase public URLs directly
+                                        unoptimized
                                     />
                                 ) : (
                                     <div className="h-48 bg-muted flex items-center justify-center text-muted-foreground text-sm">
@@ -132,10 +134,11 @@ export default function MyStoriesPage() {
                             </CardHeader>
                             <CardContent className="flex-grow pt-4 space-y-2">
                                 <CardTitle className="text-lg line-clamp-1">
-                                    {/* Generate a title based on theme/character/setting if available */}
-                                    {story.theme && story.theme !== 'Chat Generated' ? story.theme :
+                                    {/* <<< MODIFIED: Prioritize story.title */}
+                                    {story.title && story.title !== "N/A" ? story.title : 
+                                     (story.theme && story.theme !== 'Chat Generated' ? story.theme :
                                      story.character && story.character !== 'Chat Generated' ? `About ${story.character}` :
-                                     'A Generated Story'}
+                                     'A Generated Story')}
                                 </CardTitle>
                                 <CardDescription className="text-xs text-muted-foreground">
                                     Created {formatDistanceToNow(new Date(story.created_at), { addSuffix: true })}
@@ -145,8 +148,10 @@ export default function MyStoriesPage() {
                                 </p>
                             </CardContent>
                              <CardFooter>
-                                {/* Add button or link to view full story later */}
-                                <Button variant="outline" size="sm" disabled>View Story</Button>
+                                {/* Link to view full story page, disabled for now but ready */}
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/story/${story.id}`}>View Story</Link>
+                                </Button>
                              </CardFooter>
                         </Card>
                     ))}

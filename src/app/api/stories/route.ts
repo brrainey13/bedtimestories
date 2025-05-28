@@ -1,4 +1,6 @@
 // src/app/api/stories/route.ts
+// MODIFIED: To include image_url in the data being inserted.
+
 import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -26,11 +28,12 @@ export async function POST(request: NextRequest) {
       user_id: storyData.userId,
       title: storyData.title,
       content: storyData.content,
-      character: storyData.character, // Now directly contains preset ID or custom text
+      image_url: storyData.imageUrl, // <<< MODIFIED: Added this line
+      character: storyData.character,
       hero_name: storyData.heroName, 
-      setting: storyData.setting, // Now directly contains preset ID or custom text
+      setting: storyData.setting,
       story_length: storyData.storyLength,
-      moral: storyData.moral, // Now directly contains preset ID or custom text
+      moral: storyData.moral,
       theme: storyData.theme || 'N/A',
       custom_hero_description: storyData.customHeroDescription,
       custom_setting_description: storyData.customSettingDescription,
