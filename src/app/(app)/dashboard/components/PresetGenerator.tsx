@@ -139,6 +139,8 @@ export default function PresetGenerator() {
 
   // useEffect to save the story when all parts are ready
   useEffect(() => {
+    let responseErrorToastShown = false; // Declare the flag here
+
     const storyReady = !isLoadingStory && storyCompletion && storyCompletion.trim() !== '';
     const titleReady = !isLoadingTitle && titleCompletion && titleCompletion.trim() !== '';
     const imageProcessDone = !isLoadingImage; // Image is done if not loading (could be success or failure)
@@ -188,7 +190,11 @@ export default function PresetGenerator() {
       .then(async (res) => {
         const saveData = await res.json();
         if (!res.ok) {
-          toast.error("Failed to save story.", { description: saveData.error || "Unknown saving error" });
+          toast.error("Failed to save story.", { 
+            id: 'save-error', // Add ID
+            description: saveData.error || "Unknown saving error" 
+          });
+          responseErrorToastShown = true; // Set flag
           throw new Error(saveData.error || "Failed to save story");
         }
         setCurrentStoryId(saveData.storyId);
@@ -199,7 +205,7 @@ export default function PresetGenerator() {
       .catch((err: any) => {
         // Toast for fetch error is already handled if it's a response error.
         // This catches network errors or JSON parsing errors.
-        if (!toast.isActive('save-error')) { // Prevent duplicate toasts if already shown by !res.ok
+        if (!responseErrorToastShown) { // Check flag instead of toast.isActive
             toast.error("Failed to save story.", { id: 'save-error', description: err.message });
         }
         console.error("Save fetch/process error:", err);
