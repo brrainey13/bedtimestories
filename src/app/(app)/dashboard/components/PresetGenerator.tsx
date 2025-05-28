@@ -18,42 +18,60 @@ import {
   settings,
   storyLengths,
   morals,
-  PresetOption
+  PresetOption // Ensure PresetOption is imported if used by characters etc.
 } from '@/config/presetOptions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { Wand2, Loader2, Image as ImageIcon, AlertTriangle, Sparkles } from 'lucide-react';
 import NextImage from 'next/image';
 import { useCompletion } from '@ai-sdk/react';
+import { useRouter } from 'next/navigation';
 
 interface ImagePromptPresetData {
-  heroLabel: string; // Can be preset label or custom hero text
+  heroLabel: string;
   heroName: string;
-  settingLabel: string; // Can be preset label or custom setting text
-  moralLabel: string; // Can be preset label or custom moral text
+  settingLabel: string;
+  moralLabel: string;
 }
 
 export default function PresetGenerator() {
   const { session } = useAuth();
+  const router = useRouter();
 
+  // Form input states
   const [selectedHero, setSelectedHero] = useState<string>(characters.find(c => c.id !== 'custom')?.id || '');
   const [heroName, setHeroName] = useState('');
-  const [customHeroText, setCustomHeroText] = useState(''); 
+  const [customHeroText, setCustomHeroText] = useState('');
   const [selectedSetting, setSelectedSetting] = useState<string>(settings.find(s => s.id !== 'custom')?.id || '');
-  const [customSettingText, setCustomSettingText] = useState(''); 
+  const [customSettingText, setCustomSettingText] = useState('');
   const [selectedLength, setSelectedLength] = useState<string>(storyLengths.find(l => l.id !== 'custom' && l.id === 'medium')?.id || storyLengths[0]?.id || '');
   const [selectedMoral, setSelectedMoral] = useState<string>(morals.find(m => m.id === 'friendship')?.id || morals[0]?.id || '');
-  const [customMoralText, setCustomMoralText] = useState(''); 
+  const [customMoralText, setCustomMoralText] = useState('');
 
+  // Image generation states
   const [isLoadingImage, setIsLoadingImage] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
-  const [currentStoryId, setCurrentStoryId] = useState<string | null>(null); 
-  const [generatedTitle, setGeneratedTitle] = useState<string | null>(null); 
+  const [imageError, setImageError] = useState<string | null>(null);
 
-  // Simplified: Generate image and just set it in state. No DB linking here.
+  // Story saving and ID states
+  const [currentStoryId, setCurrentStoryId] = useState<string | null>(null);
+  const [isSavingStory, setIsSavingStory] = useState(false);
+
+  // State to hold details from form submission needed for saving
+  const [storyParamsForSave, setStoryParamsForSave] = useState<{
+    heroLabel: string;
+    currentHeroName: string;
+    settingLabel: string;
+    moralLabel: string;
+    lengthLabel: string; // Added from previous logic
+  } | null>(null);
+
+
   const generateImageForDisplay = useCallback(async (presetData: ImagePromptPresetData) => {
     if (!session?.user?.id) return;
-    // setIsLoadingImage(true) is set by the caller (handlePresetSubmit)
+    setIsLoadingImage(true);
+    setImageError(null);
+    setGeneratedImageUrl(null);
 
     const { heroLabel, heroName, settingLabel, moralLabel } = presetData;
     const imagePrompt = `Children's storybook illustration style. A whimsical and colorful scene featuring a ${heroLabel.toLowerCase()} named "${heroName.trim()}" in a ${settingLabel.toLowerCase()}. The illustration should evoke the feeling of a story about ${moralLabel.toLowerCase()}. Simple, friendly, vibrant, high quality. AVOID TEXT IN THE IMAGE.`;
@@ -68,35 +86,71 @@ export default function PresetGenerator() {
       if (!imgResponse.ok) throw new Error(imgData.error || `Image generation failed: ${imgResponse.statusText}`);
       
       if (imgData.imageUrl) {
-        setGeneratedImageUrl(imgData.imageUrl); 
+        setGeneratedImageUrl(imgData.imageUrl);
         toast.success("Illustration generated!");
       } else {
         throw new Error("Image URL not found in response.");
       }
     } catch (err: any) {
       console.error("Image generation error:", err);
-      setGeneratedImageUrl(null); 
+      setImageError(err.message || "Failed to generate illustration.");
+      setGeneratedImageUrl(null); // Ensure URL is null on error
       toast.error('Illustration Generation Failed', { description: err.message });
     } finally {
-      setIsLoadingImage(false); 
+      setIsLoadingImage(false);
     }
-  }, [session]); 
+  }, [session]);
 
   const {
-    completion: storyCompletion, 
-    complete: completeStory,    
+    completion: storyCompletion,
+    complete: completeStory,
     isLoading: isLoadingStory,
     error: storyError,
+    setCompletion: setStoryCompletion
   } = useCompletion({
     api: '/api/generate-story',
-    onFinish: async (_prompt, completionText) => {
-      // Story is generated. Save it.
-      if (!session?.user?.id || !completionText) {
-        if (isLoadingImage) setIsLoadingImage(false); 
-        if (isLoadingTitle) { /* Potentially stop title loading indicator if needed, though useCompletion handles its own */ }
-        return;
-      }
-      // Determine labels again for saving, consistent with how they were determined for generation
+    onFinish: (_prompt, completionText) => {
+      console.log("Story generation finished.");
+      // Save logic is now handled by useEffect
+    },
+    onError: (err) => {
+      toast.error('Story Generation Failed', { description: err.message });
+      console.error("Story generation error hook:", err);
+    },
+  });
+
+  const {
+    completion: titleCompletion,
+    complete: completeTitle,
+    isLoading: isLoadingTitle,
+    error: titleError,
+    setCompletion: setTitleCompletion
+  } = useCompletion({
+    api: '/api/generate-title',
+    onFinish: (_prompt, finalTitleText) => {
+      console.log("Title generation finished.");
+      // Save logic is now handled by useEffect
+    },
+    onError: (err) => {
+      toast.error('Title Generation Failed', { description: err.message });
+      console.error("Title generation error hook:", err);
+    },
+  });
+
+  // useEffect to save the story when all parts are ready
+  useEffect(() => {
+    const storyReady = !isLoadingStory && storyCompletion && storyCompletion.trim() !== '';
+    const titleReady = !isLoadingTitle && titleCompletion && titleCompletion.trim() !== '';
+    const imageProcessDone = !isLoadingImage; // Image is done if not loading (could be success or failure)
+
+    if (storyReady && titleReady && imageProcessDone && !isSavingStory && storyParamsForSave && session?.user?.id) {
+      setIsSavingStory(true);
+
+      // Use storyParamsForSave for these values, ensuring they reflect the state at submission time
+      const { currentHeroName } = storyParamsForSave;
+
+      // Recalculate final labels for saving based on selections at time of submit, stored in storyParamsForSave or current form state
+      // This part assumes selectedHero, customHeroText etc. are stable or storyParamsForSave has all descriptor text
       const heroObj = characters.find(c => c.id === selectedHero);
       const settingObj = settings.find(s => s.id === selectedSetting);
       const moralObj = morals.find(m => m.id === selectedMoral);
@@ -104,101 +158,100 @@ export default function PresetGenerator() {
       const finalHeroLabel = selectedHero === 'custom' && customHeroText.trim() ? customHeroText.trim() : heroObj?.label;
       const finalSettingLabel = selectedSetting === 'custom' && customSettingText.trim() ? customSettingText.trim() : settingObj?.label;
       const finalMoralLabel = selectedMoral === 'custom' && customMoralText.trim() ? customMoralText.trim() : moralObj?.label;
-
+      
       const storyDataForSaving = {
         userId: session.user.id,
-        title: generatedTitle || `A Story about ${heroName.trim() || 'a Friend'}`, 
-        content: completionText.trim(),
-        character: selectedHero, // Stores 'custom' or the preset ID
-        heroName: heroName.trim(),
-        setting: selectedSetting, // Stores 'custom' or the preset ID
+        title: titleCompletion.trim(),
+        content: storyCompletion.trim(),
+        imageUrl: generatedImageUrl, // This will be the URL from state, or null if image failed/not generated
+        character: selectedHero,
+        heroName: currentHeroName, // From storyParamsForSave or current state heroName.trim()
+        setting: selectedSetting,
         storyLength: selectedLength,
-        moral: selectedMoral, // Stores 'custom' or the preset ID
-        theme: "N/A", // Assuming theme is not part of presets yet or derived differently
-        // Include custom text if used, for potential display or filtering later
-        // These fields might need to be added to the backend API and database schema
+        moral: selectedMoral,
+        theme: "N/A",
         customHeroDescription: selectedHero === 'custom' ? customHeroText.trim() : null,
         customSettingDescription: selectedSetting === 'custom' ? customSettingText.trim() : null,
         customMoralDescription: selectedMoral === 'custom' ? customMoralText.trim() : null,
-        // Labels used in prompt, for reference
         promptHeroLabel: finalHeroLabel,
         promptSettingLabel: finalSettingLabel,
         promptMoralLabel: finalMoralLabel,
       };
 
-      try {
-        const saveResponse = await fetch('/api/stories', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(storyDataForSaving),
-        });
-        const saveData = await saveResponse.json();
-        if (!saveResponse.ok) {
-          toast.warning("Story generated, but failed to save.", { description: saveData.error });
-        } else {
-          setCurrentStoryId(saveData.storyId); 
-          toast.success("Story generated and saved!");
+      console.log("Attempting to save story with data:", storyDataForSaving);
+
+      fetch('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(storyDataForSaving),
+      })
+      .then(async (res) => {
+        const saveData = await res.json();
+        if (!res.ok) {
+          toast.error("Failed to save story.", { description: saveData.error || "Unknown saving error" });
+          throw new Error(saveData.error || "Failed to save story");
         }
-      } catch (err: any) {
-        toast.error("Failed to save story.", { description: err.message });
-      }
-      // Image linking is removed from here
-    },
-    onError: (err) => {
-      toast.error('Story Generation Failed', { description: err.message });
-      if (isLoadingImage) setIsLoadingImage(false); 
-    },
-  });
-
-  // New useCompletion for title generation
-  const {
-    completion: titleCompletion,
-    complete: completeTitle,
-    isLoading: isLoadingTitle,
-    error: titleError,
-  } = useCompletion({
-    api: '/api/generate-title',
-    onFinish: (_prompt, finalTitleText) => {
-      setGeneratedTitle(finalTitleText); 
-      toast.success("Title generated!");
-    },
-    onError: (err) => {
-      toast.error('Title Generation Failed', { description: err.message });
-      setGeneratedTitle(null); 
-    },
-  });
-
-  // Reset relevant states when a new generation starts
-  useEffect(() => {
-    // This effect might be redundant if all resets are handled in handlePresetSubmit
-    // However, it can serve as a fallback or for specific loading state transitions.
-    if (isLoadingStory || isLoadingTitle) { 
-      // Consider if resetting image/storyId here is always desired if one starts and other was part way
-      // For now, let handlePresetSubmit manage initial resets.
+        setCurrentStoryId(saveData.storyId);
+        toast.success("Story, Title, and Illustration (if any) are ready and saved!");
+        // Example: Navigate to the new story page
+        // router.push(`/story/${saveData.storyId}`); 
+      })
+      .catch((err: any) => {
+        // Toast for fetch error is already handled if it's a response error.
+        // This catches network errors or JSON parsing errors.
+        if (!toast.isActive('save-error')) { // Prevent duplicate toasts if already shown by !res.ok
+            toast.error("Failed to save story.", { id: 'save-error', description: err.message });
+        }
+        console.error("Save fetch/process error:", err);
+      })
+      .finally(() => {
+        setIsSavingStory(false);
+        setStoryParamsForSave(null); // Clear after attempting to save
+      });
     }
-  }, [isLoadingStory, isLoadingTitle]);
+  }, [
+    storyCompletion, isLoadingStory,
+    titleCompletion, isLoadingTitle,
+    generatedImageUrl, isLoadingImage, imageError, // imageError included to trigger effect if it changes
+    isSavingStory, session,
+    heroName, selectedHero, customHeroText, 
+    selectedSetting, customSettingText, 
+    selectedLength, 
+    selectedMoral, customMoralText,
+    storyParamsForSave, // Key dependency
+    router
+  ]);
+
 
   const handlePresetSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (isSubmitDisabled || !session?.user?.id) return;
 
-    // Reset states for the new generation cycle
+    // Reset all relevant states for a new generation cycle
+    setStoryCompletion('');
+    setTitleCompletion('');
     setGeneratedImageUrl(null);
+    setImageError(null);
     setCurrentStoryId(null);
-    setGeneratedTitle(null);
-    setIsLoadingImage(true); // Image generation process starts now
+    setIsSavingStory(false); 
+    setStoryParamsForSave(null); // Clear previous params
 
+    // Capture form values at the moment of submission
     const heroObj = characters.find(c => c.id === selectedHero);
     const settingObj = settings.find(s => s.id === selectedSetting);
     const lengthObj = storyLengths.find(l => l.id === selectedLength);
     const moralObj = morals.find(m => m.id === selectedMoral);
 
-    // Determine the labels to use, preferring custom text if provided
+    const currentHeroName = heroName.trim();
     const heroLabel = selectedHero === 'custom' && customHeroText.trim() ? customHeroText.trim() : heroObj?.label || 'a character';
     const settingLabel = selectedSetting === 'custom' && customSettingText.trim() ? customSettingText.trim() : settingObj?.label || 'a place';
     const moralLabel = selectedMoral === 'custom' && customMoralText.trim() ? customMoralText.trim() : moralObj?.label || 'an important lesson';
     const lengthLabel = lengthObj?.label || 'a certain';
-    const currentHeroName = heroName.trim();
+
+    // Store these captured values for the useEffect to use when saving
+    setStoryParamsForSave({
+        heroLabel, currentHeroName, settingLabel, moralLabel, lengthLabel
+    });
 
     const userPromptForStory = `Write a children's bedtime story about a ${heroLabel.toLowerCase()} named "${currentHeroName}".
     The story takes place in a ${settingLabel.toLowerCase()}.
@@ -206,60 +259,30 @@ export default function PresetGenerator() {
     The story should convey a moral about ${moralLabel.toLowerCase()}.
     Make it engaging, imaginative, and suitable for bedtime. Directly start with the story content.`;
 
-    const payloadForStory = {
-      userId: session.user.id,
-      source: 'preset',
-      characterType: selectedHero, // e.g., "dragon" or "custom"
-      characterLabel: heroLabel, // The actual label or custom text used for the prompt
-      customCharacterText: selectedHero === 'custom' ? customHeroText.trim() : undefined,
-      heroName: currentHeroName,
-      setting: selectedSetting, // e.g., "magical-forest" or "custom"
-      settingLabel: settingLabel, // The actual label or custom text used for the prompt
-      customSettingText: selectedSetting === 'custom' ? customSettingText.trim() : undefined,
-      storyLength: selectedLength,
-      storyLengthLabel: lengthLabel,
-      moral: selectedMoral, // e.g., "friendship" or "custom"
-      moralLabel: moralLabel, // The actual label or custom text used for the prompt
-      customMoralText: selectedMoral === 'custom' ? customMoralText.trim() : undefined,
-    };
-    
-    const presetDataForImage: ImagePromptPresetData = {
-      heroLabel,
-      heroName: currentHeroName,
-      settingLabel,
-      moralLabel,
-    };
-
-    // Prompt and payload for title generation
+    const presetDataForImage: ImagePromptPresetData = { heroLabel, heroName: currentHeroName, settingLabel, moralLabel };
     const userPromptForTitle = `Generate a short, catchy, and imaginative title for a children's bedtime story. The story is about a ${heroLabel.toLowerCase()} named "${currentHeroName}", takes place in ${settingLabel.toLowerCase()}, and teaches a lesson about ${moralLabel.toLowerCase()}. Title only.`;
 
-    const payloadForTitle = {
-      userId: session.user.id,
-      source: 'preset',
-      details: { 
-        heroLabel,
-        heroName: currentHeroName,
-        settingLabel,
-        moralLabel,
-        characterType: selectedHero,
-        customCharacterText: selectedHero === 'custom' ? customHeroText.trim() : undefined,
-        settingType: selectedSetting,
-        customSettingText: selectedSetting === 'custom' ? customSettingText.trim() : undefined,
-        moralType: selectedMoral,
-        customMoralText: selectedMoral === 'custom' ? customMoralText.trim() : undefined,
-      }
-    };
+    // Data payloads for AI SDK (user ID and source are important for backend validation/logging)
+    const commonApiPayloadData = { userId: session.user.id, source: 'preset' };
 
     // Start all generations
-    completeStory(userPromptForStory, { body: { prompt: userPromptForStory, data: payloadForStory } });
-    completeTitle(userPromptForTitle, { body: { prompt: userPromptForTitle, data: payloadForTitle } });
-    generateImageForDisplay(presetDataForImage);
+    completeStory(userPromptForStory, { body: { prompt: userPromptForStory, data: commonApiPayloadData } });
+    completeTitle(userPromptForTitle, { body: { prompt: userPromptForTitle, data: commonApiPayloadData } });
+    generateImageForDisplay(presetDataForImage); // This one makes its own fetch call
   };
 
-  const isSubmitDisabled = isLoadingStory || isLoadingImage || isLoadingTitle || !heroName.trim() ||
+  const isAnyLoading = isLoadingStory || isLoadingImage || isLoadingTitle || isSavingStory;
+  const isSubmitDisabled = isAnyLoading || !heroName.trim() ||
                            (selectedHero === 'custom' && !customHeroText.trim()) || 
                            (selectedSetting === 'custom' && !customSettingText.trim()) ||
                            (selectedMoral === 'custom' && !customMoralText.trim());
+  
+  let buttonText = "Create My Story";
+  if (isLoadingStory) buttonText = "Crafting Story...";
+  else if (isLoadingTitle) buttonText = "Thinking of a Title...";
+  else if (isLoadingImage) buttonText = "Illustrating...";
+  else if (isSavingStory) buttonText = "Saving your masterpiece...";
+
 
   return (
     <div className="space-y-8">
@@ -300,7 +323,7 @@ export default function PresetGenerator() {
                               : 'bg-gray-200 text-gray-700 border-gray-200 hover:bg-gray-300'
                             }`}
               >
-                <ImageIcon className={`h-5 w-5 mb-0.5 ${selectedHero === 'custom' ? 'text-white' : 'text-gray-600'}`} />
+                <ImageIcon className={`h-5 w-5 mb-0.5 ${selectedHero === 'custom' ? 'text-white' : 'text-gray-600'}`} /> {/* Changed icon for custom */}
                 <span>Custom</span>
               </Button>
             </div>
@@ -365,7 +388,7 @@ export default function PresetGenerator() {
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-2 block">Story Length</Label>
             <div className="grid grid-cols-3 gap-3">
-              {storyLengths.filter(l => l.id !== 'custom').map((length) => (
+              {storyLengths.filter(l => l.id !== 'custom').map((length) => ( // Assuming 'custom' length is not a button option
                 <Button
                   key={length.id}
                   type="button"
@@ -420,38 +443,43 @@ export default function PresetGenerator() {
             }`}
             disabled={isSubmitDisabled}
           >
-            {(isLoadingStory || isLoadingImage || isLoadingTitle) ? (
+            {isAnyLoading ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
               <Sparkles className="mr-2 h-5 w-5" />
             )}
-            Create My Story
+            {buttonText}
           </Button>
-           {storyError && (
+           {storyError && !isLoadingStory && ( // Show story error if not loading story
              <p className="text-sm text-red-600 text-center mt-2 flex items-center justify-center gap-1">
                  <AlertTriangle className="h-4 w-4" /> Story Error: {storyError.message}
+             </p>
+           )}
+           {titleError && !isLoadingTitle && ( // Show title error if not loading title
+             <p className="text-sm text-red-600 text-center mt-2 flex items-center justify-center gap-1">
+                 <AlertTriangle className="h-4 w-4" /> Title Error: {titleError.message}
              </p>
            )}
          </form>
       </div>
 
        {/* Result Display Card */}
-       {(isLoadingStory || isLoadingImage || isLoadingTitle || storyCompletion || generatedImageUrl) && (
+       {(isAnyLoading || storyCompletion || generatedImageUrl || titleCompletion || imageError || storyError || titleError) && (
          <div className="mt-10 bg-white text-gray-800 rounded-xl shadow-lg p-6 sm:p-8 space-y-6 max-w-2xl mx-auto">
            {/* Display Generated Title */}
-           {isLoadingTitle && (
+           {isLoadingTitle && !titleCompletion && (
              <div className="my-4 text-center">
                <Loader2 className="h-6 w-6 animate-spin inline-block mr-2 text-gray-500" />
-               <span className="text-gray-600">Hold tight, magic is in the making...</span>
+               <span className="text-gray-600">Thinking of a perfect title...</span>
              </div>
            )}
-           {titleError && !isLoadingTitle && (
+           {titleError && !isLoadingTitle && ( // Displayed if error and not loading
              <div className="my-4 p-3 bg-red-100 border border-red-300 rounded-md text-red-700 text-center">
                <AlertTriangle className="h-5 w-5 inline-block mr-2" />
                Title generation failed: {titleError.message}
              </div>
            )}
-           {titleCompletion && !isLoadingTitle && !titleError && (
+           {titleCompletion && (
              <div className="my-6 text-center">
                <h2 className="text-3xl font-bold tracking-tight text-black sm:text-4xl">
                  {titleCompletion}
@@ -460,7 +488,7 @@ export default function PresetGenerator() {
            )}
 
            {/* Image Display Logic */}
-           {isLoadingImage && !generatedImageUrl && ( 
+           {isLoadingImage && !generatedImageUrl && !imageError && ( 
              <div className="flex flex-col justify-center items-center h-72 bg-gray-50 rounded-lg border border-gray-200">
                <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
                <p className="ml-2 text-gray-600 mt-3 text-base">Generating Illustration...</p>
@@ -471,12 +499,17 @@ export default function PresetGenerator() {
                <NextImage src={generatedImageUrl} alt="Generated Story Illustration" width={512} height={512} className="rounded-xl shadow-xl border-2 border-gray-100" unoptimized />
              </div>
            )}
-           {/* Case: Image generation finished (isLoadingImage is false) but no URL was produced. */}
-           {/* This message will show if story is also done, or if image failed while story is still loading. */}
-           {!isLoadingImage && !generatedImageUrl && (storyCompletion || isLoadingStory || currentStoryId) && (
+           {imageError && !isLoadingImage && !generatedImageUrl &&( 
+             <div className="text-center text-gray-500 py-6 bg-red-50 rounded-lg border border-red-200">
+               <ImageIcon className="inline-block h-6 w-6 mr-2 text-red-400"/>
+               <span className="align-middle text-base text-red-600">Illustration failed: {imageError}</span>
+             </div>
+           )}
+           {/* Fallback message if image process is done (not loading), but no URL and no specific error was set */}
+           {!isLoadingImage && !generatedImageUrl && !imageError && (storyCompletion || titleCompletion || isAnyLoading) && (
              <div className="text-center text-gray-500 py-6 bg-gray-50 rounded-lg border border-gray-200">
                <ImageIcon className="inline-block h-6 w-6 mr-2 text-orange-400"/>
-               <span className="align-middle text-base">Illustration could not be generated or is still pending.</span>
+               <span className="align-middle text-base">Illustration pending or not generated.</span>
              </div>
            )}
            
@@ -489,6 +522,12 @@ export default function PresetGenerator() {
                <p className="text-base text-gray-500 text-center pt-3">Crafting your magical story...</p>
              </div>
            )}
+           {storyError && !isLoadingStory && ( // Displayed if error and not loading
+             <div className="my-4 p-3 bg-red-100 border border-red-300 rounded-md text-red-700 text-center">
+               <AlertTriangle className="h-5 w-5 inline-block mr-2" />
+               Story generation failed: {storyError.message}
+             </div>
+           )}
            {storyCompletion && ( 
              <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
                {storyCompletion.split('\n\n').map((paragraph: string, index: number) => (
@@ -496,6 +535,15 @@ export default function PresetGenerator() {
                ))}
              </div>
            )}
+
+            {/* Link to view full story if saved */}
+            {currentStoryId && !isAnyLoading && (
+                 <div className="mt-8 text-center">
+                     <Button onClick={() => router.push(`/story/${currentStoryId}`)} variant="default" size="lg">
+                         View Full Story
+                     </Button>
+                 </div>
+             )}
          </div>
        )}
     </div>
