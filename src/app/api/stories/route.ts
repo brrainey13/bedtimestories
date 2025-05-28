@@ -1,6 +1,4 @@
 // src/app/api/stories/route.ts
-// MODIFIED: To include image_url in the data being inserted.
-
 import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -19,6 +17,10 @@ export async function POST(request: NextRequest) {
     if (!storyData.userId || !storyData.content || !storyData.title) {
       return NextResponse.json({ error: 'Missing required story data: userId, content, and title are required.' }, { status: 400 });
     }
+    if (!storyData.ageRange) { // Add validation for ageRange
+        return NextResponse.json({ error: 'Missing required story data: ageRange is required.' }, { status: 400 });
+    }
+
 
     if (storyData.userId !== user.id) {
       return NextResponse.json({ error: 'Forbidden: User ID mismatch' }, { status: 403 });
@@ -28,12 +30,13 @@ export async function POST(request: NextRequest) {
       user_id: storyData.userId,
       title: storyData.title,
       content: storyData.content,
-      image_url: storyData.imageUrl, // <<< MODIFIED: Added this line
+      image_url: storyData.imageUrl,
       character: storyData.character,
       hero_name: storyData.heroName, 
       setting: storyData.setting,
       story_length: storyData.storyLength,
       moral: storyData.moral,
+      age_range: storyData.ageRange, // Store the age range ID
       theme: storyData.theme || 'N/A',
       custom_hero_description: storyData.customHeroDescription,
       custom_setting_description: storyData.customSettingDescription,
@@ -41,6 +44,7 @@ export async function POST(request: NextRequest) {
       prompt_hero_label: storyData.promptHeroLabel,
       prompt_setting_label: storyData.promptSettingLabel,
       prompt_moral_label: storyData.promptMoralLabel,
+      prompt_age_range_label: storyData.promptAgeRangeLabel, // Store the label used in prompt
     };
 
     const { data: savedStory, error: saveError } = await supabase

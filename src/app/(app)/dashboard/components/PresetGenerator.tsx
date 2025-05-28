@@ -18,11 +18,12 @@ import {
   settings,
   storyLengths,
   morals,
-  PresetOption // Ensure PresetOption is imported if used by characters etc.
+  ageRanges, 
+  PresetOption
 } from '@/config/presetOptions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Wand2, Loader2, Image as ImageIcon, AlertTriangle, Sparkles } from 'lucide-react';
+import { Wand2, Loader2, Image as ImageIcon, AlertTriangle, Sparkles, ToyBrick } from 'lucide-react'; 
 import NextImage from 'next/image';
 import { useCompletion } from '@ai-sdk/react';
 import { useRouter } from 'next/navigation';
@@ -47,6 +48,7 @@ export default function PresetGenerator() {
   const [selectedLength, setSelectedLength] = useState<string>(storyLengths.find(l => l.id !== 'custom' && l.id === 'medium')?.id || storyLengths[0]?.id || '');
   const [selectedMoral, setSelectedMoral] = useState<string>(morals.find(m => m.id === 'friendship')?.id || morals[0]?.id || '');
   const [customMoralText, setCustomMoralText] = useState('');
+  const [selectedAgeRange, setSelectedAgeRange] = useState<string>(ageRanges.find(ar => ar.id === '4-7')?.id || ageRanges[0]?.id || ''); 
 
   // Image generation states
   const [isLoadingImage, setIsLoadingImage] = useState(false);
@@ -63,7 +65,8 @@ export default function PresetGenerator() {
     currentHeroName: string;
     settingLabel: string;
     moralLabel: string;
-    lengthLabel: string; // Added from previous logic
+    lengthLabel: string;
+    ageRangeLabel: string; 
   } | null>(null);
 
 
@@ -94,7 +97,7 @@ export default function PresetGenerator() {
     } catch (err: any) {
       console.error("Image generation error:", err);
       setImageError(err.message || "Failed to generate illustration.");
-      setGeneratedImageUrl(null); // Ensure URL is null on error
+      setGeneratedImageUrl(null);
       toast.error('Illustration Generation Failed', { description: err.message });
     } finally {
       setIsLoadingImage(false);
@@ -111,7 +114,6 @@ export default function PresetGenerator() {
     api: '/api/generate-story',
     onFinish: (_prompt, completionText) => {
       console.log("Story generation finished.");
-      // Save logic is now handled by useEffect
     },
     onError: (err) => {
       toast.error('Story Generation Failed', { description: err.message });
@@ -129,7 +131,6 @@ export default function PresetGenerator() {
     api: '/api/generate-title',
     onFinish: (_prompt, finalTitleText) => {
       console.log("Title generation finished.");
-      // Save logic is now handled by useEffect
     },
     onError: (err) => {
       toast.error('Title Generation Failed', { description: err.message });
@@ -137,26 +138,22 @@ export default function PresetGenerator() {
     },
   });
 
-  // useEffect to save the story when all parts are ready
   useEffect(() => {
-    let responseErrorToastShown = false; // Declare the flag here
+    let responseErrorToastShown = false; 
 
     const storyReady = !isLoadingStory && storyCompletion && storyCompletion.trim() !== '';
     const titleReady = !isLoadingTitle && titleCompletion && titleCompletion.trim() !== '';
-    const imageProcessDone = !isLoadingImage; // Image is done if not loading (could be success or failure)
+    const imageProcessDone = !isLoadingImage; 
 
     if (storyReady && titleReady && imageProcessDone && !isSavingStory && storyParamsForSave && session?.user?.id) {
       setIsSavingStory(true);
 
-      // Use storyParamsForSave for these values, ensuring they reflect the state at submission time
       const { currentHeroName } = storyParamsForSave;
 
-      // Recalculate final labels for saving based on selections at time of submit, stored in storyParamsForSave or current form state
-      // This part assumes selectedHero, customHeroText etc. are stable or storyParamsForSave has all descriptor text
       const heroObj = characters.find(c => c.id === selectedHero);
       const settingObj = settings.find(s => s.id === selectedSetting);
       const moralObj = morals.find(m => m.id === selectedMoral);
-
+      
       const finalHeroLabel = selectedHero === 'custom' && customHeroText.trim() ? customHeroText.trim() : heroObj?.label;
       const finalSettingLabel = selectedSetting === 'custom' && customSettingText.trim() ? customSettingText.trim() : settingObj?.label;
       const finalMoralLabel = selectedMoral === 'custom' && customMoralText.trim() ? customMoralText.trim() : moralObj?.label;
@@ -165,12 +162,13 @@ export default function PresetGenerator() {
         userId: session.user.id,
         title: titleCompletion.trim(),
         content: storyCompletion.trim(),
-        imageUrl: generatedImageUrl, // This will be the URL from state, or null if image failed/not generated
+        imageUrl: generatedImageUrl,
         character: selectedHero,
-        heroName: currentHeroName, // From storyParamsForSave or current state heroName.trim()
+        heroName: currentHeroName, 
         setting: selectedSetting,
         storyLength: selectedLength,
         moral: selectedMoral,
+        ageRange: selectedAgeRange, 
         theme: "N/A",
         customHeroDescription: selectedHero === 'custom' ? customHeroText.trim() : null,
         customSettingDescription: selectedSetting === 'custom' ? customSettingText.trim() : null,
@@ -178,6 +176,7 @@ export default function PresetGenerator() {
         promptHeroLabel: finalHeroLabel,
         promptSettingLabel: finalSettingLabel,
         promptMoralLabel: finalMoralLabel,
+        promptAgeRangeLabel: storyParamsForSave.ageRangeLabel, 
       };
 
       console.log("Attempting to save story with data:", storyDataForSaving);
@@ -191,40 +190,37 @@ export default function PresetGenerator() {
         const saveData = await res.json();
         if (!res.ok) {
           toast.error("Failed to save story.", { 
-            id: 'save-error', // Add ID
+            id: 'save-error',
             description: saveData.error || "Unknown saving error" 
           });
-          responseErrorToastShown = true; // Set flag
+          responseErrorToastShown = true;
           throw new Error(saveData.error || "Failed to save story");
         }
         setCurrentStoryId(saveData.storyId);
         toast.success("Story, Title, and Illustration (if any) are ready and saved!");
-        // Example: Navigate to the new story page
-        // router.push(`/story/${saveData.storyId}`); 
       })
       .catch((err: any) => {
-        // Toast for fetch error is already handled if it's a response error.
-        // This catches network errors or JSON parsing errors.
-        if (!responseErrorToastShown) { // Check flag instead of toast.isActive
+        if (!responseErrorToastShown) { 
             toast.error("Failed to save story.", { id: 'save-error', description: err.message });
         }
         console.error("Save fetch/process error:", err);
       })
       .finally(() => {
         setIsSavingStory(false);
-        setStoryParamsForSave(null); // Clear after attempting to save
+        setStoryParamsForSave(null); 
       });
     }
   }, [
     storyCompletion, isLoadingStory,
     titleCompletion, isLoadingTitle,
-    generatedImageUrl, isLoadingImage, imageError, // imageError included to trigger effect if it changes
+    generatedImageUrl, isLoadingImage, imageError,
     isSavingStory, session,
     heroName, selectedHero, customHeroText, 
     selectedSetting, customSettingText, 
     selectedLength, 
     selectedMoral, customMoralText,
-    storyParamsForSave, // Key dependency
+    selectedAgeRange, 
+    storyParamsForSave, 
     router
   ]);
 
@@ -233,55 +229,54 @@ export default function PresetGenerator() {
     e.preventDefault();
     if (isSubmitDisabled || !session?.user?.id) return;
 
-    // Reset all relevant states for a new generation cycle
     setStoryCompletion('');
     setTitleCompletion('');
     setGeneratedImageUrl(null);
     setImageError(null);
     setCurrentStoryId(null);
     setIsSavingStory(false); 
-    setStoryParamsForSave(null); // Clear previous params
+    setStoryParamsForSave(null);
 
-    // Capture form values at the moment of submission
     const heroObj = characters.find(c => c.id === selectedHero);
     const settingObj = settings.find(s => s.id === selectedSetting);
     const lengthObj = storyLengths.find(l => l.id === selectedLength);
     const moralObj = morals.find(m => m.id === selectedMoral);
+    const ageRangeObj = ageRanges.find(ar => ar.id === selectedAgeRange); 
 
     const currentHeroName = heroName.trim();
     const heroLabel = selectedHero === 'custom' && customHeroText.trim() ? customHeroText.trim() : heroObj?.label || 'a character';
     const settingLabel = selectedSetting === 'custom' && customSettingText.trim() ? customSettingText.trim() : settingObj?.label || 'a place';
     const moralLabel = selectedMoral === 'custom' && customMoralText.trim() ? customMoralText.trim() : moralObj?.label || 'an important lesson';
     const lengthLabel = lengthObj?.label || 'a certain';
+    const ageRangeLabel = ageRangeObj?.label || 'general audience'; 
 
-    // Store these captured values for the useEffect to use when saving
     setStoryParamsForSave({
-        heroLabel, currentHeroName, settingLabel, moralLabel, lengthLabel
+        heroLabel, currentHeroName, settingLabel, moralLabel, lengthLabel, ageRangeLabel 
     });
 
     const userPromptForStory = `Write a children's bedtime story about a ${heroLabel.toLowerCase()} named "${currentHeroName}".
     The story takes place in a ${settingLabel.toLowerCase()}.
     It should be a ${lengthLabel.toLowerCase().replace(' (~','').replace(' min)','')} story.
     The story should convey a moral about ${moralLabel.toLowerCase()}.
+    The story should be written for children in the ${ageRangeLabel.toLowerCase()} age group. Please adjust vocabulary, sentence structure, and complexity accordingly.
     Make it engaging, imaginative, and suitable for bedtime. Directly start with the story content.`;
 
     const presetDataForImage: ImagePromptPresetData = { heroLabel, heroName: currentHeroName, settingLabel, moralLabel };
-    const userPromptForTitle = `Generate a short, catchy, and imaginative title for a children's bedtime story. The story is about a ${heroLabel.toLowerCase()} named "${currentHeroName}", takes place in ${settingLabel.toLowerCase()}, and teaches a lesson about ${moralLabel.toLowerCase()}. Title only.`;
+    const userPromptForTitle = `Generate a short, catchy, and imaginative title for a children's bedtime story. The story is about a ${heroLabel.toLowerCase()} named "${currentHeroName}", takes place in ${settingLabel.toLowerCase()}, teaches a lesson about ${moralLabel.toLowerCase()}, and is for the ${ageRangeLabel.toLowerCase()} age group. Title only.`;
 
-    // Data payloads for AI SDK (user ID and source are important for backend validation/logging)
     const commonApiPayloadData = { userId: session.user.id, source: 'preset' };
 
-    // Start all generations
     completeStory(userPromptForStory, { body: { prompt: userPromptForStory, data: commonApiPayloadData } });
     completeTitle(userPromptForTitle, { body: { prompt: userPromptForTitle, data: commonApiPayloadData } });
-    generateImageForDisplay(presetDataForImage); // This one makes its own fetch call
+    generateImageForDisplay(presetDataForImage);
   };
 
   const isAnyLoading = isLoadingStory || isLoadingImage || isLoadingTitle || isSavingStory;
   const isSubmitDisabled = isAnyLoading || !heroName.trim() ||
                            (selectedHero === 'custom' && !customHeroText.trim()) || 
                            (selectedSetting === 'custom' && !customSettingText.trim()) ||
-                           (selectedMoral === 'custom' && !customMoralText.trim());
+                           (selectedMoral === 'custom' && !customMoralText.trim()) ||
+                           !selectedAgeRange; 
   
   let buttonText = "Create My Story";
   if (isLoadingStory) buttonText = "Crafting Story...";
@@ -292,8 +287,8 @@ export default function PresetGenerator() {
 
   return (
     <div className="space-y-8">
-      {/* Form Card */}
-      <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg max-w-lg mx-auto">
+      {/* Form Card - MODIFIED max-w-lg to max-w-2xl */}
+      <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
         <h2 className="text-xl font-semibold text-gray-800 mb-1 text-left">Quick Story Builder</h2>
         <form onSubmit={handlePresetSubmit} className="space-y-6 mt-6">
           {/* Hero Selection */}
@@ -329,7 +324,7 @@ export default function PresetGenerator() {
                               : 'bg-gray-200 text-gray-700 border-gray-200 hover:bg-gray-300'
                             }`}
               >
-                <ImageIcon className={`h-5 w-5 mb-0.5 ${selectedHero === 'custom' ? 'text-white' : 'text-gray-600'}`} /> {/* Changed icon for custom */}
+                <ImageIcon className={`h-5 w-5 mb-0.5 ${selectedHero === 'custom' ? 'text-white' : 'text-gray-600'}`} />
                 <span>Custom</span>
               </Button>
             </div>
@@ -394,7 +389,7 @@ export default function PresetGenerator() {
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-2 block">Story Length</Label>
             <div className="grid grid-cols-3 gap-3">
-              {storyLengths.filter(l => l.id !== 'custom').map((length) => ( // Assuming 'custom' length is not a button option
+              {storyLengths.filter(l => l.id !== 'custom').map((length) => (
                 <Button
                   key={length.id}
                   type="button"
@@ -407,6 +402,30 @@ export default function PresetGenerator() {
                               }`}
                 >
                   {length.label.replace(' (~', '').replace(' Min)', '').replace('Medium', 'Med')}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Target Age Range */}
+          <div>
+            <Label className="text-sm font-medium text-gray-700 mb-2 block">Target Age Range</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {ageRanges.map((age) => (
+                <Button
+                  key={age.id}
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSelectedAgeRange(age.id)}
+                  className={`flex flex-col items-center justify-center p-3 h-auto min-h-[70px] space-y-1 rounded-lg transition-all text-xs font-medium 
+                              border
+                              ${selectedAgeRange === age.id
+                                ? 'bg-gray-700 text-white border-gray-700 ring-2 ring-gray-600' 
+                                : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
+                              }`}
+                >
+                  <age.icon className={`h-5 w-5 mb-0.5 ${selectedAgeRange === age.id ? 'text-white' : age.colorClass || 'text-gray-600'}`} />
+                  <span>{age.label}</span>
                 </Button>
               ))}
             </div>
@@ -456,12 +475,12 @@ export default function PresetGenerator() {
             )}
             {buttonText}
           </Button>
-           {storyError && !isLoadingStory && ( // Show story error if not loading story
+           {storyError && !isLoadingStory && (
              <p className="text-sm text-red-600 text-center mt-2 flex items-center justify-center gap-1">
                  <AlertTriangle className="h-4 w-4" /> Story Error: {storyError.message}
              </p>
            )}
-           {titleError && !isLoadingTitle && ( // Show title error if not loading title
+           {titleError && !isLoadingTitle && (
              <p className="text-sm text-red-600 text-center mt-2 flex items-center justify-center gap-1">
                  <AlertTriangle className="h-4 w-4" /> Title Error: {titleError.message}
              </p>
@@ -479,7 +498,7 @@ export default function PresetGenerator() {
                <span className="text-gray-600">Thinking of a perfect title...</span>
              </div>
            )}
-           {titleError && !isLoadingTitle && ( // Displayed if error and not loading
+           {titleError && !isLoadingTitle && (
              <div className="my-4 p-3 bg-red-100 border border-red-300 rounded-md text-red-700 text-center">
                <AlertTriangle className="h-5 w-5 inline-block mr-2" />
                Title generation failed: {titleError.message}
@@ -511,7 +530,6 @@ export default function PresetGenerator() {
                <span className="align-middle text-base text-red-600">Illustration failed: {imageError}</span>
              </div>
            )}
-           {/* Fallback message if image process is done (not loading), but no URL and no specific error was set */}
            {!isLoadingImage && !generatedImageUrl && !imageError && (storyCompletion || titleCompletion || isAnyLoading) && (
              <div className="text-center text-gray-500 py-6 bg-gray-50 rounded-lg border border-gray-200">
                <ImageIcon className="inline-block h-6 w-6 mr-2 text-orange-400"/>
@@ -528,7 +546,7 @@ export default function PresetGenerator() {
                <p className="text-base text-gray-500 text-center pt-3">Crafting your magical story...</p>
              </div>
            )}
-           {storyError && !isLoadingStory && ( // Displayed if error and not loading
+           {storyError && !isLoadingStory && (
              <div className="my-4 p-3 bg-red-100 border border-red-300 rounded-md text-red-700 text-center">
                <AlertTriangle className="h-5 w-5 inline-block mr-2" />
                Story generation failed: {storyError.message}
